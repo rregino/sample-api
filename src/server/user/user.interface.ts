@@ -1,7 +1,9 @@
 export interface NewUser {
   firstName: string,
   lastName: string,
-  address: string
+  mobileNumber: string,
+  address: string,
+  birthday?: Date
 }
 
 export interface User extends NewUser {
