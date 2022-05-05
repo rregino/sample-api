@@ -1,4 +1,4 @@
-export interface NewUser {
+interface NewUser {
   firstName: string,
   lastName: string,
   mobileNumber: string,
@@ -6,6 +6,11 @@ export interface NewUser {
   birthday?: Date
 }
 
-export interface User extends NewUser {
+interface User extends NewUser {
   id: number
+}
+
+export {
+  NewUser,
+  User
 }

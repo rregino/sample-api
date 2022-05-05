@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+message Point {
+  string full_name = 1;
+  string mobile_number = 2;
+  string address = 3;
+  double lat = 4;
+  double lng = 5;
+}
+
+enum CommonCourierErrorCode {
+  ERROR_UNKNOWN = 0;
+  INVALID_DETAILS = 1;
+}
+
+enum CourierType {
+  COURIER_UNKNOWN = 0;
+  BORZO = 1;
+  LALAMOVE = 2;
+}
+
+message GetCourierPricesRequest {
+  Point pick_up = 1;
+  Point drop_off = 2;
+}
+
+message GetCourierPricesResponse {
+  message Error {
+    CommonCourierErrorCode code = 1;
+  }
+
+  message Success {
+    string delivery_id = 1;
+    CourierType courier = 2;
+    double price = 3;
+  }
+
+  oneof response {
+    Success success = 1;
+    Error error = 2;
+  }
+}
+
+message BookCourierRequest {
+  Point pick_up = 1;
+  Point drop_off = 2;
+}
+
+message BookCourierResponse {
+  message Error {
+    CommonCourierErrorCode code = 1;
+  }
+
+  message Success {
+    string id = 1;
+  }
+
+  oneof response {
+    Success success = 1;
+    Error error = 2;
+  }
+}
+
+service Express {
+  rpc GetCourierPrices (GetCourierPricesRequest) returns (stream GetCourierPricesResponse) {};
+  rpc BookCourier (BookCourierRequest) returns (BookCourierResponse) {}
+}

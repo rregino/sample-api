@@ -16,7 +16,7 @@ import { InMemUserDb } from "./repo/userdb.class";
 
 // import { itemsRouter } from './old-items/items.router';
 import { NewUser, User } from "./user/user.interface";
-import { Db } from './repo/db.interface';
+import { Db } from './repo/db';
 
 dotenv.config();
 

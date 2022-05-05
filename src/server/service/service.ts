@@ -1,4 +1,4 @@
-import { Db } from "../repo/db.interface";
+import { Db } from "../repo/db";
 import { NewUser, User } from "../user/user.interface";
 
 export class Service {

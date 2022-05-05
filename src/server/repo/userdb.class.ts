@@ -1,7 +1,7 @@
 import { NewUser, User } from './../user/user.interface';
-import { Db } from './db.interface';
+import { Db } from './db';
 
-export class InMemUserDb implements Db <number, NewUser, User> {
+class InMemUserDb implements Db <number, NewUser, User> {
 
   inMemUsers: Array<User> = [];
 
@@ -32,10 +32,9 @@ export class InMemUserDb implements Db <number, NewUser, User> {
   }
 }
 
-// const userDb = new UserDb();
-
-// userDb.save({firstName: 'Harry', lastName: 'Potter', address: 'Hogwarts'});
-// userDb.update({id: 1, firstName: 'Harry', lastName: 'Potter', address: 'Hogwarts'});
+export {
+  InMemUserDb
+}
 
 // https://github.com/agreatfool/grpc_tools_node_protoc_ts
 // https://github.com/CatsMiaow/node-grpc-typescript
