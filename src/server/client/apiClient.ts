@@ -19,13 +19,22 @@ function callApi<Req, Res>(
   resType: t.Type<Res>,
   headers?: { [key: string]: string },
 ): Promise<ApiResponse<Res>> {
-  return fetch(url, { method, body: JSON.stringify(req), headers })
+
+  const getBody = () => {
+    if(method == 'POST' || method == 'PUT')
+      return { body: JSON.stringify(req) }
+    else return {};
+  }
+
+  const others = getBody();
+
+  return fetch(url, { method, headers, ...others })
     .then(res => {
       const statusCode = res.status;
       if(statusCode >= 200 && statusCode < 300) {
-        return res.json();
+        return res.json().catch((_) => {});
       } else {
-        return returnApiError({ statusCode, message: res.statusText  });
+        return rejectApiError({ statusCode, message: res.statusText  });
       }
     })
     .then(json => {
@@ -34,13 +43,18 @@ function callApi<Req, Res>(
         case "Right": return returnApiSuccess(res.right);
         case "Left":
           res.left.map(l => console.warn(l.context));
-          return returnApiError({ statusCode: 400, message: 'Unable to parse JSON' });
+          return rejectApiError({ statusCode: 400, message: 'Unable to parse JSON' });
       }
       // return json as Res; //does not return an error if incorrectly parsed
     })
     .catch(err => {
-      console.error(err);
-      return returnApiError({ statusCode: 500, message: `Unexpected error: ${err}` });
+      const getApiError: () => ApiError = () => {
+        if(err.statusCode && err.message)
+          return { statusCode: err.statusCode, message: err.message };
+        else
+          return { statusCode: 500, message: `Unexpected error: ${err}` };
+      }
+      return returnApiError(getApiError());
     });
 
     function returnApiSuccess(res: Res) {
@@ -49,6 +63,10 @@ function callApi<Req, Res>(
 
     function returnApiError(apiError: ApiError) {
       return Promise.resolve(E.left<ApiError, Res>(apiError));
+    }
+
+    function rejectApiError(apiError: ApiError) {
+      return Promise.reject(apiError);
     }
 }
 

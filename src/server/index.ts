@@ -21,6 +21,7 @@ import { XpressServerImpl } from './impl/xpressServerImpl';
 import { BorzoClient } from './client/borzoClient';
 import { InMemBookingDb } from './repo/bookingdb';
 import { Booking } from './model/booking';
+import { LalamoveClient } from './client/lalamoveClient';
 
 dotenv.config();
 
@@ -28,7 +29,7 @@ dotenv.config();
  * App Variables
  */
 
-if(!process.env.PORT && !process.env.BORZO_API_TOKEN) {
+if(!process.env.PORT && !process.env.BORZO_API_TOKEN && !process.env.LALAMOVE_API_KEY && !process.env.LALAMOVE_API_SECRET) {
   process.exit(1);
 }
 
@@ -37,7 +38,8 @@ const PORT: number = parseInt(process.env.PORT as string, 10);
 const inMemUserDb: Db<number, NewUser, User> = new InMemUserDb();
 const inMemBookingDb: SimpleDb<string, Booking> = new InMemBookingDb();
 const borzoClient = new BorzoClient(process.env.BORZO_API_TOKEN as string);
-const courierClients = [ borzoClient ];
+const lalamoveClient = new LalamoveClient({ apiKey: process.env.LALAMOVE_API_KEY as string, apiSecret: process.env.LALAMOVE_API_SECRET as string });
+const courierClients = [ borzoClient, lalamoveClient ];
 const svc = new Service(inMemUserDb, inMemBookingDb, courierClients);
 
 const usersServerImpl = new UsersServerImpl(svc);

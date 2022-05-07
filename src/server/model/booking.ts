@@ -8,6 +8,7 @@ interface BorzoBooking {
 interface LalamoveBooking {
   _kind: PX.CourierType.LALAMOVE
   quotationId: string
+  stopId: { origin: string, destination: string }
 }
 
 type BookingType = BorzoBooking | LalamoveBooking

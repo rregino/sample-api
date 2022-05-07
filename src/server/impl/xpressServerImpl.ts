@@ -33,7 +33,6 @@ class XpressServerImpl implements ServerImpl<XpressService, XpressServer> {
       const bookings = this.svc.listBookings();
       callback(null, { bookings });
     }
-
   }
 }
 

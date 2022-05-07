@@ -6,11 +6,12 @@ import { CourierClient } from '../model/courierClient';
 import { CancelOrderError, CancelOrderResponse, CancelOrderSuccess, GetOrderPriceError, GetOrderPriceResponse, GetOrderPriceSuccess, RequestOrderError, RequestOrderResponse, RequestOrderSuccess } from '../model/courier';
 // import { left, right } from 'fp-ts/lib/Either';
 import * as E from 'fp-ts/lib/Either';
+import { BorzoBooking } from '../model/booking';
 
-class BorzoClient implements CourierClient<PX.CourierType>{
+class BorzoClient implements CourierClient<PX.CourierType.BORZO>{
 
   apiToken: string;
-  courierType = PX.CourierType.BORZO;
+  courierType: PX.CourierType.BORZO = PX.CourierType.BORZO;
 
   constructor(apiToken: string) {
     this.apiToken = apiToken;
@@ -40,7 +41,7 @@ class BorzoClient implements CourierClient<PX.CourierType>{
     });
   }
 
-  requestOrder(pickup: PX.Point, dropoff: PX.Point): Promise<RequestOrderResponse> {
+  requestOrder(pickup: PX.Point, dropoff: PX.Point, bookingType: BorzoBooking): Promise<RequestOrderResponse> {
     const url = `${this.url}/create-order`;
 
     const request = this.assembleOrderRequest(pickup, dropoff);
