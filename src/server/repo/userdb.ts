@@ -1,5 +1,5 @@
-import { NewUser, User } from './../user/user.interface';
-import { Db } from './db';
+import { NewUser, User } from '../model/user';
+import { Db } from '../model/db';
 
 class InMemUserDb implements Db <number, NewUser, User> {
 
@@ -20,11 +20,12 @@ class InMemUserDb implements Db <number, NewUser, User> {
 
   update(t: User): void {
     const initUsers = this.inMemUsers.filter(u => u.id !== t.id);
-    this.inMemUsers.push(t);
+    initUsers.push(t);
+    this.inMemUsers = initUsers;
   }
 
   get(id: number): User | undefined {
-    return this.inMemUsers.find(u => u.id !== id);
+    return this.inMemUsers.find(u => u.id == id);
   }
 
   list(): Array<User> {

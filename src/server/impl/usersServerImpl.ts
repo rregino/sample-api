@@ -1,11 +1,13 @@
 import { sendUnaryData, ServerUnaryCall } from '@grpc/grpc-js';
 import { Empty } from "../../proto/google/protobuf/empty";
 import { CreateUserRequest, CreateUserResponse, ListUsersResponse, UsersServer, UsersService } from "../../proto/users";
+import { ServerImpl } from '../model/serverImpl';
 import { Service } from '../service/service';
 
-class UsersServerImpl {
-
+class UsersServerImpl implements ServerImpl<UsersService, UsersServer> {
   svc: Service;
+
+  serviceDefinition = UsersService;
 
   constructor(s: Service) {
     this.svc = s;
@@ -23,12 +25,9 @@ class UsersServerImpl {
       const response: ListUsersResponse = { users: this.svc.listUsers() };
       callback(null, response);
     }
-
   }
 }
 
 export {
-  UsersServerImpl,
-  UsersService
+  UsersServerImpl
 }
-
