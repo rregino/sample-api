@@ -1,5 +1,6 @@
 import * as E from "fp-ts/lib/Either"
 import { Either } from "fp-ts/lib/Either"
+import { returnVoid } from "../utils/helpers";
 import { BookingType } from "./booking"
 
 type ToEither<In, Out> = (r: In) => Out;
@@ -33,8 +34,6 @@ type CancelOrderResponse = Either<CancelOrderError, void>
 const CancelOrderSuccess = E.right<RequestOrderError, void>(returnVoid());
 const CancelOrderError: ToEither<RequestOrderError, CancelOrderResponse> =
   (r) => E.left<RequestOrderError, void>(r);
-
-function returnVoid(): void { }
 
 export {
   CancelOrderError,

@@ -42,7 +42,7 @@ export class Service {
     const client = this.courierClients.find(c => c.courierType == booking?.bookingType._kind);
 
     if(booking && client) {
-      return client.requestOrder(booking.origin, booking.destination)
+      return client.requestOrder(booking.origin, booking.destination, booking.bookingType)
           .then(res => this.resolveRequestOrderResponse(res, booking))
     } else
       return this.resolveError('Booking not found');
