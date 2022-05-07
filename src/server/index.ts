@@ -10,13 +10,17 @@
 //  import helmet from 'helmet';
 
  import { Server, ServerCredentials } from '@grpc/grpc-js';
-import { UsersServerImpl, UsersService } from "./impl/usersServerImpl";
+import { UsersServerImpl } from "./impl/usersServerImpl";
 import { Service } from "./service/service";
-import { InMemUserDb } from "./repo/userdb.class";
+import { InMemUserDb } from "./repo/userdb";
 
 // import { itemsRouter } from './old-items/items.router';
-import { NewUser, User } from "./user/user.interface";
-import { Db } from './repo/db';
+import { NewUser, User } from "./model/user";
+import { Db, SimpleDb } from './model/db';
+import { XpressServerImpl } from './impl/xpressServerImpl';
+import { BorzoClient } from './client/borzoClient';
+import { InMemBookingDb } from './repo/bookingdb';
+import { Booking } from './model/booking';
 
 dotenv.config();
 
@@ -24,17 +28,28 @@ dotenv.config();
  * App Variables
  */
 
-if(!process.env.PORT) {
+if(!process.env.PORT && !process.env.BORZO_API_TOKEN) {
   process.exit(1);
 }
 
-const inMemUserDb: Db<number, NewUser, User> = new InMemUserDb();
-const userSvc = new Service(inMemUserDb);
-const usersServerImpl = new UsersServerImpl(userSvc);
 const PORT: number = parseInt(process.env.PORT as string, 10);
 
+const inMemUserDb: Db<number, NewUser, User> = new InMemUserDb();
+const inMemBookingDb: SimpleDb<string, Booking> = new InMemBookingDb();
+const borzoClient = new BorzoClient(process.env.BORZO_API_TOKEN as string);
+const courierClients = [ borzoClient ];
+const svc = new Service(inMemUserDb, inMemBookingDb, courierClients);
+
+const usersServerImpl = new UsersServerImpl(svc);
+const xpressServerImpl = new XpressServerImpl(svc);
+
+const serverImpls = [
+  usersServerImpl,
+  xpressServerImpl
+]
+
 const server = new Server();
-server.addService(UsersService, usersServerImpl.Impl);
+serverImpls.map(si => server.addService(si.serviceDefinition, si.Impl));
 
 server.bindAsync(`0.0.0.0:${PORT}`, ServerCredentials.createInsecure(), (err: Error | null, port: number) => {
   if(err) {
@@ -64,3 +79,12 @@ server.bindAsync(`0.0.0.0:${PORT}`, ServerCredentials.createInsecure(), (err: Er
 // app.listen(PORT, () => {
 //   console.log(`Listening on port ${PORT}`);
 // });
+
+/*
+yarn add -D grpc-tools --ignore-scripts
+pushd node_modules/grpc-tools
+node_modules/.bin/node-pre-gyp install --target_arch=x64
+popd
+yarn add grpc_tools_node_protoc_ts
+yarn add @grpc/grpc-js
+*/

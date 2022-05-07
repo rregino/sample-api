@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+message Point {
+  string full_name = 1;
+  string mobile_number = 2;
+  string address = 3;
+  double lat = 4;
+  double lng = 5;
+}
+
+message Booking {
+  string id = 1;
+  Point origin = 2;
+  Point destination = 3;
+  CourierType courier = 4;
+  BookingStatus status = 5;
+}
+
+enum CommonCourierErrorCode {
+  ERROR_UNKNOWN = 0;
+  INVALID_DETAILS = 1;
+}
+
+enum CourierType {
+  COURIER_UNKNOWN = 0;
+  BORZO = 1;
+  LALAMOVE = 2;
+}
+
+enum BookingStatus {
+  NO_STATUS = 0;
+  REQUESTED = 1;
+  CANCELED = 2;
+}
+
+message GetAvailableCouriersRequest {
+  Point pick_up = 1;
+  Point drop_off = 2;
+}
+
+message GetAvailableCouriersResponse {
+  message Error {
+    //CommonCourierErrorCode code = 1;
+    string error_message = 1;
+  }
+
+  message Success {
+    string id = 1;
+    CourierType courier = 2;
+    double price = 3;
+  }
+
+  oneof response {
+    Success success = 1;
+    Error error = 2;
+  }
+}
+
+message BookCourierRequest {
+  string id = 1;
+}
+
+message BookCourierResponse {
+  message Error {
+    //CommonCourierErrorCode code = 1;
+    string error_message = 1;
+  }
+
+  message Success {
+    string id = 1;
+  }
+
+  oneof response {
+    Success success = 1;
+    Error error = 2;
+  }
+}
+
+message CancelBookingRequest {
+  string id = 1;
+}
+
+message CancelBookingResponse {
+  message Error {
+    //CommonCourierErrorCode code = 1;
+    string error_message = 1;
+  }
+
+  oneof response {
+    google.protobuf.Empty success = 1;
+    Error error = 2;
+  }
+}
+
+message ListBookingsResponse {
+  repeated Booking bookings = 1;
+}
+
+service Xpress {
+  rpc GetAvailableCouriers (GetAvailableCouriersRequest) returns (stream GetAvailableCouriersResponse) {};
+  rpc BookCourier (BookCourierRequest) returns (BookCourierResponse) {}
+  rpc CancelBooking (CancelBookingRequest) returns (CancelBookingResponse) {}
+  rpc ListBookings (google.protobuf.Empty) returns (ListBookingsResponse) {}
+}
