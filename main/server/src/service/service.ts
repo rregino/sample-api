@@ -1,4 +1,4 @@
-import * as PX from "../../proto/xpress";
+import * as PX from "../../../proto/xpress";
 import { Db, SimpleDb } from "../model/db";
 import { NewUser, User } from "../model/user";
 import * as E from "fp-ts/lib/Either"

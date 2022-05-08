@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "proto:generate": "./scripts/generate-proto.sh",
-    "start:server": "ts-node-dev --respawn --pretty src/server"
+    "start:server": "ts-node-dev --respawn --pretty main/server/src"
   },
   "keywords": [],
   "author": "",

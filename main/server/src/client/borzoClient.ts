@@ -1,5 +1,5 @@
 // import { CourierType, Point } from '../../proto/xpress';
-import * as PX from '../../proto/xpress';
+import * as PX from '../../../proto/xpress';
 import { ApiError, ApiResponse, callApi } from "./apiClient";
 import * as t from 'io-ts';
 import { CourierClient } from '../model/courierClient';

@@ -1,5 +1,5 @@
 import { CourierClient } from "../model/courierClient";
-import * as PX from '../../proto/xpress';
+import * as PX from '../../../proto/xpress';
 import { GetOrderPriceResponse, RequestOrderResponse, CancelOrderResponse, GetOrderPriceError, GetOrderPriceSuccess, RequestOrderError, RequestOrderSuccess, CancelOrderError, CancelOrderSuccess } from "../model/courier";
 import { randomUUID, createHmac } from "crypto";
 import { ApiError, ApiResponse, callApi, HttpMethod } from "./apiClient";
