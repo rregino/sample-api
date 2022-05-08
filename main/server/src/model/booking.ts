@@ -1,5 +1,5 @@
 import { string } from "fp-ts"
-import * as PX from "../../proto/xpress"
+import * as PX from "../../../proto/xpress"
 
 interface BorzoBooking {
   _kind: PX.CourierType.BORZO
