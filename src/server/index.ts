@@ -90,3 +90,9 @@ popd
 yarn add grpc_tools_node_protoc_ts
 yarn add @grpc/grpc-js
 */
+
+/*
+todo:
+- add better config (remove dotenv)
+- add saving of keys in db
+*/
