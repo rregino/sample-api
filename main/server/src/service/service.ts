@@ -101,8 +101,8 @@ export class Service {
     if(E.isRight(res)) {
       const { orderId } = res.right;
       const bookingUpdates = { bookingOrderId: orderId, status: PX.BookingStatus.REQUESTED };
-      this.updateBooking(booking, bookingUpdates);
-      return this.resolveSuccess({ id: booking.id });
+      const updatedBooking = this.updateBooking(booking, bookingUpdates);
+      return this.resolveSuccess({ booking: this.toPXBooking(updatedBooking) });
     } else {
       return this.resolveError(res.left);
     }
@@ -111,16 +111,17 @@ export class Service {
   private resolveCancelOrderResponse(res: CancelOrderResponse, booking: Booking): Promise<PX.CancelBookingResponse> {
     if(E.isRight(res)) {
       const bookingUpdates = { bookingOrderId: undefined, status: PX.BookingStatus.CANCELED };
-      this.updateBooking(booking, bookingUpdates);
-      return this.resolveSuccess({});
+      const updatedBooking = this.updateBooking(booking, bookingUpdates);
+      return this.resolveSuccess({ booking: this.toPXBooking(updatedBooking) });
     } else {
       return this.resolveError(res.left);
     }
   }
 
-  private updateBooking(originalBooking: Booking, partialBooking: Partial<Booking>) {
+  private updateBooking(originalBooking: Booking, partialBooking: Partial<Booking>): Booking {
     const updatedBooking: Booking = {...originalBooking, ...partialBooking };
     this.bookingDb.update(updatedBooking);
+    return updatedBooking;
   }
 
   //assumes response have the same type
@@ -130,5 +131,15 @@ export class Service {
 
   private resolveError(msg: string): Promise<{ error: { errorMessage: string }}> {
     return Promise.resolve({ error: { errorMessage: msg } });
+  }
+
+  private toPXBooking(booking: Booking): PX.Booking {
+    return {
+      id: booking.id,
+      origin: booking.origin,
+      destination: booking.destination,
+      courier: booking.bookingType._kind,
+      status: booking.status
+    }
   }
 }

@@ -181,7 +181,7 @@ export interface BookCourierResponse_Error {
 }
 
 export interface BookCourierResponse_Success {
-  id: string;
+  booking?: Booking;
 }
 
 export interface CancelBookingRequest {
@@ -189,13 +189,17 @@ export interface CancelBookingRequest {
 }
 
 export interface CancelBookingResponse {
-  success?: Empty | undefined;
+  success?: CancelBookingResponse_Success | undefined;
   error?: CancelBookingResponse_Error | undefined;
 }
 
 export interface CancelBookingResponse_Error {
   /** CommonCourierErrorCode code = 1; */
   errorMessage: string;
+}
+
+export interface CancelBookingResponse_Success {
+  booking?: Booking;
 }
 
 export interface ListBookingsResponse {
@@ -912,7 +916,7 @@ export const BookCourierResponse_Error = {
 };
 
 function createBaseBookCourierResponse_Success(): BookCourierResponse_Success {
-  return { id: "" };
+  return { booking: undefined };
 }
 
 export const BookCourierResponse_Success = {
@@ -920,8 +924,8 @@ export const BookCourierResponse_Success = {
     message: BookCourierResponse_Success,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.id !== "") {
-      writer.uint32(10).string(message.id);
+    if (message.booking !== undefined) {
+      Booking.encode(message.booking, writer.uint32(10).fork()).ldelim();
     }
     return writer;
   },
@@ -937,7 +941,7 @@ export const BookCourierResponse_Success = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.id = reader.string();
+          message.booking = Booking.decode(reader, reader.uint32());
           break;
         default:
           reader.skipType(tag & 7);
@@ -949,13 +953,18 @@ export const BookCourierResponse_Success = {
 
   fromJSON(object: any): BookCourierResponse_Success {
     return {
-      id: isSet(object.id) ? String(object.id) : "",
+      booking: isSet(object.booking)
+        ? Booking.fromJSON(object.booking)
+        : undefined,
     };
   },
 
   toJSON(message: BookCourierResponse_Success): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = message.id);
+    message.booking !== undefined &&
+      (obj.booking = message.booking
+        ? Booking.toJSON(message.booking)
+        : undefined);
     return obj;
   },
 
@@ -963,7 +972,10 @@ export const BookCourierResponse_Success = {
     object: I
   ): BookCourierResponse_Success {
     const message = createBaseBookCourierResponse_Success();
-    message.id = object.id ?? "";
+    message.booking =
+      object.booking !== undefined && object.booking !== null
+        ? Booking.fromPartial(object.booking)
+        : undefined;
     return message;
   },
 };
@@ -1035,7 +1047,10 @@ export const CancelBookingResponse = {
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.success !== undefined) {
-      Empty.encode(message.success, writer.uint32(10).fork()).ldelim();
+      CancelBookingResponse_Success.encode(
+        message.success,
+        writer.uint32(10).fork()
+      ).ldelim();
     }
     if (message.error !== undefined) {
       CancelBookingResponse_Error.encode(
@@ -1057,7 +1072,10 @@ export const CancelBookingResponse = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.success = Empty.decode(reader, reader.uint32());
+          message.success = CancelBookingResponse_Success.decode(
+            reader,
+            reader.uint32()
+          );
           break;
         case 2:
           message.error = CancelBookingResponse_Error.decode(
@@ -1076,7 +1094,7 @@ export const CancelBookingResponse = {
   fromJSON(object: any): CancelBookingResponse {
     return {
       success: isSet(object.success)
-        ? Empty.fromJSON(object.success)
+        ? CancelBookingResponse_Success.fromJSON(object.success)
         : undefined,
       error: isSet(object.error)
         ? CancelBookingResponse_Error.fromJSON(object.error)
@@ -1088,7 +1106,7 @@ export const CancelBookingResponse = {
     const obj: any = {};
     message.success !== undefined &&
       (obj.success = message.success
-        ? Empty.toJSON(message.success)
+        ? CancelBookingResponse_Success.toJSON(message.success)
         : undefined);
     message.error !== undefined &&
       (obj.error = message.error
@@ -1103,7 +1121,7 @@ export const CancelBookingResponse = {
     const message = createBaseCancelBookingResponse();
     message.success =
       object.success !== undefined && object.success !== null
-        ? Empty.fromPartial(object.success)
+        ? CancelBookingResponse_Success.fromPartial(object.success)
         : undefined;
     message.error =
       object.error !== undefined && object.error !== null
@@ -1169,6 +1187,71 @@ export const CancelBookingResponse_Error = {
   ): CancelBookingResponse_Error {
     const message = createBaseCancelBookingResponse_Error();
     message.errorMessage = object.errorMessage ?? "";
+    return message;
+  },
+};
+
+function createBaseCancelBookingResponse_Success(): CancelBookingResponse_Success {
+  return { booking: undefined };
+}
+
+export const CancelBookingResponse_Success = {
+  encode(
+    message: CancelBookingResponse_Success,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.booking !== undefined) {
+      Booking.encode(message.booking, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(
+    input: _m0.Reader | Uint8Array,
+    length?: number
+  ): CancelBookingResponse_Success {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCancelBookingResponse_Success();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.booking = Booking.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CancelBookingResponse_Success {
+    return {
+      booking: isSet(object.booking)
+        ? Booking.fromJSON(object.booking)
+        : undefined,
+    };
+  },
+
+  toJSON(message: CancelBookingResponse_Success): unknown {
+    const obj: any = {};
+    message.booking !== undefined &&
+      (obj.booking = message.booking
+        ? Booking.toJSON(message.booking)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<CancelBookingResponse_Success>, I>>(
+    object: I
+  ): CancelBookingResponse_Success {
+    const message = createBaseCancelBookingResponse_Success();
+    message.booking =
+      object.booking !== undefined && object.booking !== null
+        ? Booking.fromPartial(object.booking)
+        : undefined;
     return message;
   },
 };

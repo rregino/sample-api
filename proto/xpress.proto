@@ -69,7 +69,7 @@ message BookCourierResponse {
   }
 
   message Success {
-    string id = 1;
+    Booking booking = 1;
   }
 
   oneof response {
@@ -88,8 +88,12 @@ message CancelBookingResponse {
     string error_message = 1;
   }
 
+  message Success {
+    Booking booking = 1;
+  }
+
   oneof response {
-    google.protobuf.Empty success = 1;
+    Success success = 1;
     Error error = 2;
   }
 }
