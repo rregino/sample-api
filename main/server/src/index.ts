@@ -87,8 +87,6 @@ yarn add -D grpc-tools --ignore-scripts
 pushd node_modules/grpc-tools
 node_modules/.bin/node-pre-gyp install --target_arch=x64
 popd
-yarn add grpc_tools_node_protoc_ts
-yarn add @grpc/grpc-js
 */
 
 /*
