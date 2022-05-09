@@ -3,7 +3,7 @@ import {
   useParams,
   useNavigate
 } from "react-router-dom";
-import { callBookCourier, callGetAvailableCouriers, callGetBooking, callGetUser } from './client';
+import { callBookCourier, callCancelCourier, callGetAvailableCouriers, callGetBooking, callGetUser } from './client';
 import * as PU from "./proto/users";
 import * as PX from "./proto/xpress";
 
@@ -149,7 +149,8 @@ const GetBooking: React.FC = () => {
   let params = useParams();
 
   type State = {
-    booking?: PX.Booking
+    booking?: PX.Booking,
+    error?: string //todo add
   }
 
   const [ state, setState ] = React.useState<State>({});
@@ -157,7 +158,7 @@ const GetBooking: React.FC = () => {
   React.useEffect(() => {
     if(params.bookingId) {
       callGetBooking(params.bookingId).then(bookingRes => {
-        setState({booking: bookingRes })
+        setState({ booking: bookingRes })
       });
     }
   }, []);
@@ -172,20 +173,40 @@ const GetBooking: React.FC = () => {
     );
   }
 
-  const onButtonPressed = () => {
+  const onBookPressed = () => {
     if(state.booking?.id) {
       callBookCourier(state.booking.id).then(res => {
         console.log('CALL BOOK COURIER');
-        console.log(res)
+        if(res && res.booking) {
+          setState({ booking: res.booking })
+        }
       })
     }
   };
+
+  const onCancelPressed = () => {
+    if(state.booking?.id) {
+      callCancelCourier(state.booking?.id).then(res => {
+        console.log('CALL CANCEL COURIER');
+        if(res && res.booking) {
+          setState({ booking: res.booking })
+        }
+      })
+    }
+  }
 
   const isCancelButtonDisabled = () => {
     if(state.booking) {
       return state.booking?.status !== PX.BookingStatus.REQUESTED;
     }
-    return false;
+    return true;
+  }
+
+  const isBookButtonDisabled = () => {
+    if(state.booking) {
+      return state.booking?.status === PX.BookingStatus.REQUESTED;
+    }
+    return true;
   }
 
   return <div>
@@ -208,10 +229,10 @@ const GetBooking: React.FC = () => {
           renderPoint(state.booking.destination) : <div>No Recipient</div>
       }
     </div>
-    <button disabled={ !state.booking } onClick={() => onButtonPressed() }>
+    <button disabled={ isBookButtonDisabled() } onClick={() => onBookPressed() }>
       Book
     </button>
-    <button disabled={ isCancelButtonDisabled() } onClick={() => {} }>
+    <button disabled={ isCancelButtonDisabled() } onClick={() => onCancelPressed() }>
       Cancel Booking
     </button>
 

@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "proto:generate": "./scripts/generate-proto.sh",
+    "proto:server-generate": "./scripts/server-generate-proto.sh",
+    "proto:client-generate": "./scripts/client-generate-proto.sh",
     "start:server": "ts-node-dev --respawn --pretty main/server/src"
   },
   "keywords": [],

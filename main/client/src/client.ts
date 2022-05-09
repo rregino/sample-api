@@ -30,7 +30,7 @@ const callGetBookings = () => {
 
 const callGetAvailableCouriers = (req: PX.GetAvailableCouriersRequest) => {
   return xpressClientImpl.GetAvailableCouriers(req);
-}
+};
 
 const callGetBooking = (id: string) => {
   return xpressClientImpl.ListBookings({}).then(res => {
@@ -42,6 +42,12 @@ const callBookCourier = (id: string) => {
   return xpressClientImpl.BookCourier({ id }).then(res => {
     return res.success;
   })
+};
+
+const callCancelCourier = (id: string) => {
+  return xpressClientImpl.CancelBooking({ id }).then(res => {
+    return res.success;
+  })
 }
 
 export {
@@ -51,5 +57,6 @@ export {
   callGetBooking,
   callCreateUser,
   callGetAvailableCouriers,
-  callBookCourier
+  callBookCourier,
+  callCancelCourier
 }
