@@ -4,25 +4,17 @@ import {
   useParams,
   Outlet
 } from "react-router-dom";
+import { callCreateUser, callGetBookings, callGetUser, callListUsers } from './client';
 import * as PU from "./proto/users";
+import * as PX from "./proto/xpress";
 
-const rpc = new PU.GrpcWebImpl('http://localhost:8080', { debug: false });
-const usersClientImpt = new PU.UsersClientImpl(rpc);
-
-interface NewUser {
-  firstName: string,
-  lastName: string,
-  mobileNumber: string,
-  address: string
-}
+// const usersRpc = new PU.GrpcWebImpl('http://localhost:8080', { debug: false });
+// const usersClientImpt = new PU.UsersClientImpl(usersRpc);
+// const xpressRpc = new PX.GrpcWebImpl('http://localhost:8080', { debug: false });
+// const xpressClientImpt = new PX.XpressClientImpl(xpressRpc);
 
 const ListUsers: React.FC = () => {
   const [users, setUsers] = React.useState<Array<PU.User>>([]);
-  const callListUsers = () => {
-    return usersClientImpt.ListUsers({}).then(res => {
-      return res.users;
-    })
-  };
 
   React.useEffect(() => {
     callListUsers().then(usersRes => {
@@ -37,7 +29,7 @@ const ListUsers: React.FC = () => {
             users.map((user, index) => (
               <Link
                 style={{ display: "block", margin: "1rem 0" }}
-                to={`/users/${user.id}`}
+                to={`/bookings/${user.id}`}
                 key={user.id}
               >
                 {user.firstName} {user.lastName}
@@ -45,111 +37,104 @@ const ListUsers: React.FC = () => {
             ))
           }
         </nav>
-        <Outlet />
     </div>
     );
 }
 
 const GetUser: React.FC = () => {
+  type State = {
+    user: PU.User | null,
+    bookings: Array<PX.Booking>
+  }
 
-  const [user, setUser] = React.useState<PU.User | null >(null);
+  const [state, setState] = React.useState<State>({ user: null, bookings: [] });
 
   let params = useParams();
 
-  const callGetUser = () => {
-    return usersClientImpt.ListUsers({}).then(res => {
-      return res.users.find(u => u.id.toString() === params.userId);
-    })
-  };
-
   React.useEffect(() => {
-    callGetUser().then(userRes => {
-      console.log('get user?!?!')
-      if(userRes) {
-        setUser(userRes);
-      }
-      console.log('setUser');
-      console.log(userRes);
-    })
+    if(params.userId) {
+      callGetUser(params.userId).then(userRes => {
+        return callGetBookings().then(bookingRes => {
+          if(userRes) {
+            setState({...state, ...{ user: userRes, bookings: bookingRes }});
+          }
+        })
+      })
+    }
   }, []);
 
   return (<div>
-    { user ? (
-        <div> { user.firstName } </div>
+    { state.user ? (
+        <div>
+          <div>
+            Hello { state.user.firstName } { state.user.lastName }!
+          </div>
+          <div>
+            <Link to={`/bookings/${state.user.id}/create`}>Create Booking</Link>
+          </div>
+        </div>
       ) : (
-        <div> None </div>
+        <div> User not found </div>
       )
     }
   </div>);
 }
 
-// class CreateUser extends Component {
+const CreateUser: React.FC = () => {
 
-//   state: NewUser = {
-//     firstName: '',
-//     lastName: '',
-//     mobileNumber: '',
-//     address: ''
-//   };
+  interface NewUser {
+    firstName: string,
+    lastName: string,
+    mobileNumber: string,
+    address: string
+  }
 
-//   callCreateUser = () => {
-//     const rpc = new PU.GrpcWebImpl('http://localhost:8080', { debug: false });
-//     const usersClientImpt = new PU.UsersClientImpl(rpc);
+  const [ user, setNewUser ] = React.useState<NewUser>({
+    firstName: '',
+    lastName: '',
+    mobileNumber: '',
+    address: ''
+  });
 
-//     const req: PU.CreateUserRequest = this.state;
-//     usersClientImpt.CreateUser(req).then(res => {
-//       console.log('res'  + res);
-//       console.log(res);
-//     })
-//   }
+  const handleSubmit = (event: React.FormEvent) =>  {
+    console.log('in create user');
+    console.log(user);
+    callCreateUser(user);
+    event.preventDefault();
+  }
 
-//   handleSubmit = (event: React.FormEvent) =>  {
-//     console.log('state');
-//     console.log(this.state);
-//     this.callCreateUser();
-//     event.preventDefault();
-//   }
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    const updatedUser = { [name]: value } as Pick<NewUser, keyof NewUser>;
+    setNewUser({...user, ...updatedUser });
+  }
 
-//   handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-//     const name = event.target.name;
+  return(
+    <form onSubmit={handleSubmit}>
+      <label>
+        First Name:
+          <input name="firstName" type="text" value={user.firstName} onChange={handleChange} />
+      </label>
 
-//     console.log('change')
-//     console.log(name);
+      <label>
+        Last Name:
+          <input name="lastName" type="text" value={user.lastName} onChange={handleChange} />
+      </label>
 
-//     console.log(event.target.value);
-//     this.setState({
-//       [name]: event.target.value
-//     });
+      <label>
+        Mobile Number:
+          <input name="mobileNumber" type="text" value={user.mobileNumber} onChange={handleChange} />
+      </label>
 
-//   }
+      <label>
+        Address:
+          <input name="address" type="text" value={user.address} onChange={handleChange} />
+      </label>
 
-//   render() {
-//     return(
-//       <form onSubmit={this.handleSubmit}>
-//         <label>
-//           First Name:
-//             <input name="firstName" type="text" value={this.state.firstName} onChange={this.handleChange} />
-//         </label>
+      <input type="submit" value="Submit" />
+    </form>
+  );
+}
 
-//         <label>
-//           Last Name:
-//             <input name="lastName" type="text" value={this.state.lastName} onChange={this.handleChange} />
-//         </label>
 
-//         <label>
-//           Mobile Number:
-//             <input name="mobileNumber" type="text" value={this.state.mobileNumber} onChange={this.handleChange} />
-//         </label>
-
-//         <label>
-//           Address:
-//             <input name="address" type="text" value={this.state.address} onChange={this.handleChange} />
-//         </label>
-
-//         <input type="submit" value="Submit" />
-//       </form>
-//     );
-//   }
-// }
-
-export { ListUsers, GetUser };
+export { ListUsers, CreateUser, GetUser };

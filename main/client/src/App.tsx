@@ -8,8 +8,9 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import User from './User';
-import { GetUser, ListUsers } from './Users';
+// import User from './User';
+import { GetUser, CreateUser, ListUsers } from './Users';
+import { CreateBookings, GetBooking } from './Bookings';
 
 class App extends Component {
   render() {
@@ -26,8 +27,10 @@ class App extends Component {
 
           <Routes>
             <Route path="/users" element={<ListUsers/>}/>
-            <Route path="/users/create" element={<User/>} />
-            <Route path="/users/:userId" element={<GetUser/>} />
+            <Route path="/users/create" element={<CreateUser/>} />
+            <Route path="/bookings/:userId" element={<GetUser/>} />
+            <Route path="/bookings/:userId/create" element={<CreateBookings/>} />
+            <Route path="/bookings/:userId/:bookingId" element={<GetBooking/>} />
             <Route path="/" element={<Home/>}/>
           </Routes>
 
