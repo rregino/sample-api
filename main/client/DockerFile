@@ -1,0 +1,4 @@
+FROM envoyproxy/envoy-dev:d3110f49cf4b14e7aa05388ec2ddc052c402381c
+COPY envoy.yaml /etc/envoy/envoy.yaml
+CMD /usr/local/bin/envoy -c /etc/envoy/envoy.yaml -l trace --log-path /tmp/envoy_info.log
+

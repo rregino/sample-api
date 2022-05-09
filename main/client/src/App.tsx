@@ -1,38 +1,46 @@
 import React from 'react';
+// import React, { ChangeEvent, FormEvent } from 'react';
 import { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-
-import * as PU from "./proto/users";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link
+} from "react-router-dom";
+import User from './User';
+import { GetUser, ListUsers } from './Users';
 
 class App extends Component {
-
-  callCreateUser = () => {
-    // const client = new PU.UsersClient('http://localhost:7000', credentials.createInsecure());
-
-    const rpc = new PU.GrpcWebImpl('http://localhost:7000', {
-      debug: false,
-    });
-    const a = new PU.UsersClientImpl(rpc);
-    const req: PU.CreateUserRequest = {
-      firstName: 'test',
-      lastName: 'last name',
-      mobileNumber: '09196105668',
-      address: 'hogwarts'
-    }
-    a.CreateUser(req).then(res => {
-      console.log('res'  + res);
-    })
-  }
-
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <button style={{padding:10}} onClick={this.callCreateUser}>Click for grpc request</button>
-        </header>
-      </div>
+      <Router>
+        <div>
+          <nav>
+            <ul>
+              <li><Link to="/">Home</Link></li>
+              <li><Link to="/users">List Users</Link></li>
+              <li><Link to="/users/create">Create Users</Link></li>
+            </ul>
+          </nav>
+
+          <Routes>
+            <Route path="/users" element={<ListUsers/>}/>
+            <Route path="/users/create" element={<User/>} />
+            <Route path="/users/:userId" element={<GetUser/>} />
+            <Route path="/" element={<Home/>}/>
+          </Routes>
+
+        </div>
+      </Router>
+    );
+  }
+}
+
+class Home extends Component {
+  render() {
+    return (
+      <h2>Home</h2>
     );
   }
 }
