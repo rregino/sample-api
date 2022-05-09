@@ -3,7 +3,7 @@ import {
   useParams,
   useNavigate
 } from "react-router-dom";
-import { callGetAvailableCouriers, callGetBooking, callGetUser } from './client';
+import { callBookCourier, callGetAvailableCouriers, callGetBooking, callGetUser } from './client';
 import * as PU from "./proto/users";
 import * as PX from "./proto/xpress";
 
@@ -96,16 +96,6 @@ const CreateBookings: React.FC = () => {
     event.preventDefault();
   }
 
-  const translateCourier = (courierType: PX.CourierType) => {
-    if(courierType === PX.CourierType.BORZO) {
-      return "Borzo";
-    } else if(courierType === PX.CourierType.LALAMOVE) {
-      return "Lalamove";
-    } else {
-      return "Others";
-    }
-  }
-
   const onButtonPressed = (id: string) => {
     navigate(`/bookings/${state.user?.id}/${id}`);
   }
@@ -159,35 +149,83 @@ const GetBooking: React.FC = () => {
   let params = useParams();
 
   type State = {
-    user?: PU.User,
     booking?: PX.Booking
   }
 
+  const [ state, setState ] = React.useState<State>({});
+
   React.useEffect(() => {
-    if(params.userId) {
-      callGetUser(params.userId).then(userRes => {
-        if(params.bookingId) {
-          return callGetBooking(params.bookingId).then(bookingRes => {
-            if(bookingRes?.status === PX.BookingStatus.NO_STATUS) { //todo should move to server
-
-            } else {
-
-            }
-          });
-        } else {
-          //return error
-        }
+    if(params.bookingId) {
+      callGetBooking(params.bookingId).then(bookingRes => {
+        setState({booking: bookingRes })
       });
     }
   }, []);
 
+  const renderPoint = (point: PX.Point) => {
+    return (
+      <div>
+        <div> Full name: { point.fullName } </div>
+        <div> Mobile Number: { point.mobileNumber }</div>
+        <div> Address: { point.address }</div>
+      </div>
+    );
+  }
+
+  const onButtonPressed = () => {
+    if(state.booking?.id) {
+      callBookCourier(state.booking.id).then(res => {
+        console.log('CALL BOOK COURIER');
+        console.log(res)
+      })
+    }
+  };
+
+  const isCancelButtonDisabled = () => {
+    if(state.booking) {
+      return state.booking?.status !== PX.BookingStatus.REQUESTED;
+    }
+    return false;
+  }
+
   return <div>
     Check details:
     <div>
-      Sender:
-      <div> {} </div>
+      Courier:
+      { state.booking?.courier ?
+        translateCourier(state.booking.courier) : <div>No Courier</div>
+      }
     </div>
+    <div>
+      Sender:
+      { state.booking?.origin ?
+          renderPoint(state.booking.origin) : <div>No Sender</div>
+      }
+    </div>
+    <div>
+      Recipient:
+      { state.booking?.destination ?
+          renderPoint(state.booking.destination) : <div>No Recipient</div>
+      }
+    </div>
+    <button disabled={ !state.booking } onClick={() => onButtonPressed() }>
+      Book
+    </button>
+    <button disabled={ isCancelButtonDisabled() } onClick={() => {} }>
+      Cancel Booking
+    </button>
+
   </div>
+}
+
+const translateCourier = (courierType: PX.CourierType) => {
+  if(courierType === PX.CourierType.BORZO) {
+    return "Borzo";
+  } else if(courierType === PX.CourierType.LALAMOVE) {
+    return "Lalamove";
+  } else {
+    return "Others";
+  }
 }
 
 export {
