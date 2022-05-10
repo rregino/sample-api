@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 message Point {
   string full_name = 1;
   string mobile_number = 2;
@@ -40,8 +38,16 @@ enum BookingStatus {
   CANCELED = 2;
 }
 
+message ListBookingsFilter {
+  string user_id = 1;
+  repeated BookingStatus statuses = 2;
+}
+
 message GetAvailableCouriersRequest {
-  Point pick_up = 1;
+  oneof origin {
+    Point pick_up = 1;
+    string user_id = 3;
+  }
   Point drop_off = 2;
 }
 
@@ -103,13 +109,26 @@ message CancelBookingResponse {
   }
 }
 
+message ListBookingsRequest {
+  ListBookingsFilter filter = 1;
+}
+
 message ListBookingsResponse {
   repeated Booking bookings = 1;
+}
+
+message GetBookingRequest {
+  string id = 1;
+}
+
+message GetBookingResponse {
+  Booking booking = 1;
 }
 
 service Xpress {
   rpc GetAvailableCouriers (GetAvailableCouriersRequest) returns (stream GetAvailableCouriersResponse) {};
   rpc BookCourier (BookCourierRequest) returns (BookCourierResponse) {}
   rpc CancelBooking (CancelBookingRequest) returns (CancelBookingResponse) {}
-  rpc ListBookings (google.protobuf.Empty) returns (ListBookingsResponse) {}
+  rpc ListBookings (ListBookingsRequest) returns (ListBookingsResponse) {}
+  rpc GetBooking(GetBookingRequest) returns (GetBookingResponse) {}
 }

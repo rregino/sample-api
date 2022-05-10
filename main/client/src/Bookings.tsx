@@ -6,13 +6,14 @@ import {
 import { callBookCourier, callCancelCourier, callGetAvailableCouriers, callGetBooking, callGetUser } from './client';
 import * as PU from "./proto/users";
 import * as PX from "./proto/xpress";
+import { bookingStatusToString } from './utils/utils';
 
 const CreateBookings: React.FC = () => {
 
   type State = {
     user?: PU.User,
     recipient: Recipient,
-    availableCouriers: Array<PX.GetAvailableCouriersResponse_Success>,
+    availableCouriers: Array<PX.GetAvailableCouriersResponse>,
     activeBookingId?: string
   }
 
@@ -41,9 +42,7 @@ const CreateBookings: React.FC = () => {
   React.useEffect(() => {
     if(params.userId) {
       callGetUser(params.userId).then(userRes => {
-        console.log('USER?!?!');
-        console.log(userRes);
-        setState({...state, ...{ user: userRes }});
+        setState(prevState => ({...prevState, ...{ user: userRes }}));
       });
     }
   }, []);
@@ -51,53 +50,59 @@ const CreateBookings: React.FC = () => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     const updatedRecipient: Recipient = { [name]: value } as Pick<Recipient, keyof Recipient>;
-    setState({...state, ...{ recipient: {...state.recipient, ...updatedRecipient }}});
-
-    console.log('UPDATED STATE');
+    setState(prevState => ({...prevState, ...{ recipient: {...prevState.recipient, ...updatedRecipient }}}));
     console.log(state.recipient);
   }
 
   const handleSubmit = (event: React.FormEvent) => {
     setState((prevState) => ({ ...prevState, ...{ availableCouriers: [] } }))
 
-    const dropOff: PX.Point =
-      { fullName: state.recipient.fullName,
-        mobileNumber: state.recipient.mobileNumber,
-        address: state.recipient.address,
-        lat: parseFloat(state.recipient.lat),
-        lng: parseFloat(state.recipient.lng)
-      }
+    const pickUpLat =  parseFloat(state.recipient.lat);
+    const pickUpLng =  parseFloat(state.recipient.lng);
 
-    const pickUp: PX.Point =
-      { fullName: `${state.user?.firstName} ${state.user?.lastName}`,
-        mobileNumber: `${state.user?.mobileNumber}`,
-        address: `${state.user?.address}`,
-        lat: parseFloat(state.recipient.lat),
-        lng: parseFloat(state.recipient.lng)
-      }
-
-    console.log('PICKUP');
-    console.log(pickUp);
-    console.log('DROPOFF');
-    console.log(dropOff);
-
-    const observable = {
-      next: (value: PX.GetAvailableCouriersResponse) => {
-        if(value.success) {
-          const newAvailableCourier = [ value.success ];
-          setState((prevState) => ({ ...prevState, ...{ availableCouriers: [...prevState.availableCouriers, ...newAvailableCourier] } }));
+    if(pickUpLat && pickUpLng && state.user?.id) {
+      const dropOff: PX.Point =
+        { fullName: state.recipient.fullName,
+          mobileNumber: state.recipient.mobileNumber,
+          address: state.recipient.address,
+          lat: pickUpLat,
+          lng: pickUpLng
         }
-      },
-      complete: () => {
-        console.log('after');
-      }
-    };
-    callGetAvailableCouriers({ pickUp, dropOff }).subscribe(observable);
+
+        const observable = {
+          next: (value: PX.GetAvailableCouriersResponse) => {
+            const response = [ value ];
+            setState((prevState) => ({ ...prevState, ...{ availableCouriers: [...prevState.availableCouriers, ...response] } }));
+          },
+          complete: () => {
+            console.log('after');
+          }
+        };
+        callGetAvailableCouriers({ userId: state.user.id, dropOff }).subscribe(observable);
+
+
+    } else alert('Invalid lat lng');
+
     event.preventDefault();
   }
 
   const onButtonPressed = (id: string) => {
     navigate(`/bookings/${state.user?.id}/${id}`);
+  }
+
+  const renderAvailableCouriers = (res: PX.GetAvailableCouriersResponse) => {
+    if(res.success) {
+      const success = res.success;
+      return (
+        <div key={success.id}>
+          { translateCourier(success.courier) } -- PHP { success.price }
+          <button onClick={() => onButtonPressed(success.id)}>
+            Select
+        </button>
+        </div>
+      );
+    } else if(res.error) return <div> Error: { res.error.errorMessage } </div>;
+    else return <div/>;
   }
 
   return <div>
@@ -132,14 +137,8 @@ const CreateBookings: React.FC = () => {
     </div>
     <div>
       Couriers:
-        { state.availableCouriers && state.availableCouriers.map((availableCourier, index) => (
-          <div key={availableCourier.id}>
-            { translateCourier(availableCourier.courier) } -- PHP { availableCourier.price }
-            <button onClick={() => onButtonPressed(availableCourier.id)}>
-              Select
-            </button>
-          </div>
-        ))
+        { state.availableCouriers &&
+          state.availableCouriers.map(availableCourier => renderAvailableCouriers(availableCourier))
         }
     </div>
   </div>
@@ -150,15 +149,18 @@ const GetBooking: React.FC = () => {
 
   type State = {
     booking?: PX.Booking,
+    isBookPressed: boolean,
+    isCancelPressed: boolean
     error?: string //todo add
   }
 
-  const [ state, setState ] = React.useState<State>({});
+  const [ state, setState ] = React.useState<State>({ isBookPressed: false, isCancelPressed: false });
 
   React.useEffect(() => {
     if(params.bookingId) {
       callGetBooking(params.bookingId).then(bookingRes => {
-        setState({ booking: bookingRes })
+        updateState({ booking: bookingRes });
+        // setState(prevState => ({...prevState, ...{ booking: bookingRes }}));
       });
     }
   }, []);
@@ -175,10 +177,12 @@ const GetBooking: React.FC = () => {
 
   const onBookPressed = () => {
     if(state.booking?.id) {
+      // setState(prevState => ({...prevState, ...{ isBookPressed: true }}));
+      updateState({ isBookPressed: true });
       callBookCourier(state.booking.id).then(res => {
-        console.log('CALL BOOK COURIER');
         if(res && res.booking) {
-          setState({ booking: res.booking })
+          updateState({ booking: res.booking, isBookPressed: false });
+          // setState(prevState => ({...prevState, ...{ booking: res.booking, isBookPressed: false }}));
         }
       })
     }
@@ -186,31 +190,41 @@ const GetBooking: React.FC = () => {
 
   const onCancelPressed = () => {
     if(state.booking?.id) {
+      // setState(prevState => ({...prevState, ...{ isCancelPressed: true }}));
+      updateState({ isCancelPressed: true });
       callCancelCourier(state.booking?.id).then(res => {
-        console.log('CALL CANCEL COURIER');
         if(res && res.booking) {
-          setState({ booking: res.booking })
+          updateState({ booking: res.booking, isCancelPressed: false });
+          // setState(prevState => ({...prevState, ...{ booking: res.booking, isCancelPressed: false }}));
         }
       })
     }
   }
 
+  const updateState = (state: Partial<State>) => {
+    setState(prevState => ({...prevState, ...state}));
+  }
+
   const isCancelButtonDisabled = () => {
-    if(state.booking) {
+    if (state.isCancelPressed) {
+      return true;
+    } else if(state.booking) {
       return state.booking?.status !== PX.BookingStatus.REQUESTED;
     }
     return true;
   }
 
   const isBookButtonDisabled = () => {
-    if(state.booking) {
+    if(state.isBookPressed) {
+      return true;
+    } else if(state.booking) {
       return state.booking?.status === PX.BookingStatus.REQUESTED;
     }
     return true;
   }
 
   return <div>
-    Check details:
+    Details
     <div>
       Courier:
       { state.booking?.courier ?
@@ -229,6 +243,9 @@ const GetBooking: React.FC = () => {
           renderPoint(state.booking.destination) : <div>No Recipient</div>
       }
     </div>
+    <div>
+      Status: { state.booking ? bookingStatusToString(state.booking.status) : 'No status' }
+    </div>
     <button disabled={ isBookButtonDisabled() } onClick={() => onBookPressed() }>
       Book
     </button>
@@ -240,12 +257,10 @@ const GetBooking: React.FC = () => {
 }
 
 const translateCourier = (courierType: PX.CourierType) => {
-  if(courierType === PX.CourierType.BORZO) {
-    return "Borzo";
-  } else if(courierType === PX.CourierType.LALAMOVE) {
-    return "Lalamove";
-  } else {
-    return "Others";
+  switch(courierType) {
+    case PX.CourierType.BORZO: return 'Borzo';
+    case PX.CourierType.LALAMOVE: return 'Lalamove';
+    default: return 'Others';
   }
 }
 

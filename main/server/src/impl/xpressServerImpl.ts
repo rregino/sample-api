@@ -15,8 +15,8 @@ class XpressServerImpl implements ServerImpl<PX.XpressService, PX.XpressServer> 
 
   public Impl: PX.XpressServer = {
     getAvailableCouriers: (call: ServerWritableStream<PX.GetAvailableCouriersRequest, PX.GetAvailableCouriersResponse>): void => {
-      const { pickUp, dropOff } = call.request;
-      const availableCouriers = this.svc.getAvailableCouriers(pickUp, dropOff);
+      const { pickUp, userId, dropOff } = call.request;
+      const availableCouriers = this.svc.getAvailableCouriers(pickUp, userId, dropOff);
       Promise.allSettled(
         availableCouriers.map(func => {
           return func().then(res => call.write(res));
@@ -29,9 +29,19 @@ class XpressServerImpl implements ServerImpl<PX.XpressService, PX.XpressServer> 
     cancelBooking: (call: ServerUnaryCall<PX.CancelBookingRequest, PX.CancelBookingResponse>, callback: sendUnaryData<PX.CancelBookingResponse>): void => {
       this.svc.cancelBooking(call.request.id).then(res => callback(null, res));
     },
-    listBookings: (call: ServerUnaryCall<P.Empty, PX.ListBookingsResponse>, callback: sendUnaryData<PX.ListBookingsResponse>): void => {
-      const bookings = this.svc.listBookings();
+    listBookings: (call: ServerUnaryCall<PX.ListBookingsRequest, PX.ListBookingsResponse>, callback: sendUnaryData<PX.ListBookingsResponse>): void => {
+      const listBookings = () => {
+        if(call.request.filter?.userId)
+          return this.svc.listUserBookings(call.request.filter?.userId, call.request.filter.statuses);
+        else
+          return this.svc.listBookings();
+      };
+      const bookings = listBookings();
       callback(null, { bookings });
+    },
+    getBooking: (call: ServerUnaryCall<PX.GetBookingRequest, PX.GetBookingResponse>, callback: sendUnaryData<PX.GetBookingResponse>): void => {
+      const booking = this.svc.getBooking(call.request.id);
+      callback(null, { booking })
     }
   }
 }

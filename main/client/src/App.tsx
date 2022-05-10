@@ -30,7 +30,6 @@ class App extends React.Component {
             <Route path="/bookings/:userId/:bookingId" element={<GetBooking/>} />
             <Route path="/" element={<Home/>}/>
           </Routes>
-
         </div>
       </Router>
     );

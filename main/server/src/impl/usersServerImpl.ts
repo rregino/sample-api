@@ -16,13 +16,15 @@ class UsersServerImpl implements ServerImpl<PU.UsersService, PU.UsersServer> {
   public Impl: PU.UsersServer = {
     createUser: (call: ServerUnaryCall<PU.CreateUserRequest, PU.CreateUserResponse>, callback: sendUnaryData<PU.CreateUserResponse>): void => {
       const newUser = this.svc.createUser(call.request);
-      const response: PU.CreateUserResponse = { user: newUser };
-      callback(null, response);
+      callback(null, { user: newUser });
     },
 
     listUsers: (call: ServerUnaryCall<P.Empty, PU.ListUsersResponse>, callback: sendUnaryData<PU.ListUsersResponse>): void => {
-      const response: PU.ListUsersResponse = { users: this.svc.listUsers() };
-      callback(null, response);
+      callback(null, { users: this.svc.listUsers() });
+    },
+
+    getUser: (call: ServerUnaryCall<PU.GetUserRequest, PU.GetUserResponse>, callback: sendUnaryData<PU.GetUserResponse>): void => {
+      callback(null, { user: this.svc.getUser(call.request.id) });
     }
   }
 }

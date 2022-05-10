@@ -3,7 +3,6 @@ import Long from "long";
 import { grpc } from "@improbable-eng/grpc-web";
 import * as _m0 from "protobufjs/minimal";
 import { Observable } from "rxjs";
-import { Empty } from "./google/protobuf/empty";
 import { BrowserHeaders } from "browser-headers";
 import { share } from "rxjs/operators";
 
@@ -142,8 +141,14 @@ export interface UserBooking {
   booking?: Booking;
 }
 
+export interface ListBookingsFilter {
+  userId: string;
+  statuses: BookingStatus[];
+}
+
 export interface GetAvailableCouriersRequest {
-  pickUp?: Point;
+  pickUp?: Point | undefined;
+  userId: string | undefined;
   dropOff?: Point;
 }
 
@@ -199,8 +204,20 @@ export interface CancelBookingResponse_Success {
   booking?: Booking;
 }
 
+export interface ListBookingsRequest {
+  filter?: ListBookingsFilter;
+}
+
 export interface ListBookingsResponse {
   bookings: Booking[];
+}
+
+export interface GetBookingRequest {
+  id: string;
+}
+
+export interface GetBookingResponse {
+  booking?: Booking;
 }
 
 function createBasePoint(): Point {
@@ -470,8 +487,86 @@ export const UserBooking = {
   },
 };
 
+function createBaseListBookingsFilter(): ListBookingsFilter {
+  return { userId: "", statuses: [] };
+}
+
+export const ListBookingsFilter = {
+  encode(
+    message: ListBookingsFilter,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    writer.uint32(18).fork();
+    for (const v of message.statuses) {
+      writer.int32(v);
+    }
+    writer.ldelim();
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ListBookingsFilter {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListBookingsFilter();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.userId = reader.string();
+          break;
+        case 2:
+          if ((tag & 7) === 2) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.statuses.push(reader.int32() as any);
+            }
+          } else {
+            message.statuses.push(reader.int32() as any);
+          }
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListBookingsFilter {
+    return {
+      userId: isSet(object.userId) ? String(object.userId) : "",
+      statuses: Array.isArray(object?.statuses)
+        ? object.statuses.map((e: any) => bookingStatusFromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ListBookingsFilter): unknown {
+    const obj: any = {};
+    message.userId !== undefined && (obj.userId = message.userId);
+    if (message.statuses) {
+      obj.statuses = message.statuses.map((e) => bookingStatusToJSON(e));
+    } else {
+      obj.statuses = [];
+    }
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ListBookingsFilter>, I>>(
+    object: I
+  ): ListBookingsFilter {
+    const message = createBaseListBookingsFilter();
+    message.userId = object.userId ?? "";
+    message.statuses = object.statuses?.map((e) => e) || [];
+    return message;
+  },
+};
+
 function createBaseGetAvailableCouriersRequest(): GetAvailableCouriersRequest {
-  return { pickUp: undefined, dropOff: undefined };
+  return { pickUp: undefined, userId: undefined, dropOff: undefined };
 }
 
 export const GetAvailableCouriersRequest = {
@@ -481,6 +576,9 @@ export const GetAvailableCouriersRequest = {
   ): _m0.Writer {
     if (message.pickUp !== undefined) {
       Point.encode(message.pickUp, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(26).string(message.userId);
     }
     if (message.dropOff !== undefined) {
       Point.encode(message.dropOff, writer.uint32(18).fork()).ldelim();
@@ -501,6 +599,9 @@ export const GetAvailableCouriersRequest = {
         case 1:
           message.pickUp = Point.decode(reader, reader.uint32());
           break;
+        case 3:
+          message.userId = reader.string();
+          break;
         case 2:
           message.dropOff = Point.decode(reader, reader.uint32());
           break;
@@ -515,6 +616,7 @@ export const GetAvailableCouriersRequest = {
   fromJSON(object: any): GetAvailableCouriersRequest {
     return {
       pickUp: isSet(object.pickUp) ? Point.fromJSON(object.pickUp) : undefined,
+      userId: isSet(object.userId) ? String(object.userId) : undefined,
       dropOff: isSet(object.dropOff)
         ? Point.fromJSON(object.dropOff)
         : undefined,
@@ -525,6 +627,7 @@ export const GetAvailableCouriersRequest = {
     const obj: any = {};
     message.pickUp !== undefined &&
       (obj.pickUp = message.pickUp ? Point.toJSON(message.pickUp) : undefined);
+    message.userId !== undefined && (obj.userId = message.userId);
     message.dropOff !== undefined &&
       (obj.dropOff = message.dropOff
         ? Point.toJSON(message.dropOff)
@@ -540,6 +643,7 @@ export const GetAvailableCouriersRequest = {
       object.pickUp !== undefined && object.pickUp !== null
         ? Point.fromPartial(object.pickUp)
         : undefined;
+    message.userId = object.userId ?? undefined;
     message.dropOff =
       object.dropOff !== undefined && object.dropOff !== null
         ? Point.fromPartial(object.dropOff)
@@ -1324,6 +1428,71 @@ export const CancelBookingResponse_Success = {
   },
 };
 
+function createBaseListBookingsRequest(): ListBookingsRequest {
+  return { filter: undefined };
+}
+
+export const ListBookingsRequest = {
+  encode(
+    message: ListBookingsRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.filter !== undefined) {
+      ListBookingsFilter.encode(
+        message.filter,
+        writer.uint32(10).fork()
+      ).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ListBookingsRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseListBookingsRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.filter = ListBookingsFilter.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ListBookingsRequest {
+    return {
+      filter: isSet(object.filter)
+        ? ListBookingsFilter.fromJSON(object.filter)
+        : undefined,
+    };
+  },
+
+  toJSON(message: ListBookingsRequest): unknown {
+    const obj: any = {};
+    message.filter !== undefined &&
+      (obj.filter = message.filter
+        ? ListBookingsFilter.toJSON(message.filter)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<ListBookingsRequest>, I>>(
+    object: I
+  ): ListBookingsRequest {
+    const message = createBaseListBookingsRequest();
+    message.filter =
+      object.filter !== undefined && object.filter !== null
+        ? ListBookingsFilter.fromPartial(object.filter)
+        : undefined;
+    return message;
+  },
+};
+
 function createBaseListBookingsResponse(): ListBookingsResponse {
   return { bookings: [] };
 }
@@ -1390,6 +1559,122 @@ export const ListBookingsResponse = {
   },
 };
 
+function createBaseGetBookingRequest(): GetBookingRequest {
+  return { id: "" };
+}
+
+export const GetBookingRequest = {
+  encode(
+    message: GetBookingRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetBookingRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetBookingRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetBookingRequest {
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+    };
+  },
+
+  toJSON(message: GetBookingRequest): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetBookingRequest>, I>>(
+    object: I
+  ): GetBookingRequest {
+    const message = createBaseGetBookingRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseGetBookingResponse(): GetBookingResponse {
+  return { booking: undefined };
+}
+
+export const GetBookingResponse = {
+  encode(
+    message: GetBookingResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.booking !== undefined) {
+      Booking.encode(message.booking, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetBookingResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetBookingResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.booking = Booking.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetBookingResponse {
+    return {
+      booking: isSet(object.booking)
+        ? Booking.fromJSON(object.booking)
+        : undefined,
+    };
+  },
+
+  toJSON(message: GetBookingResponse): unknown {
+    const obj: any = {};
+    message.booking !== undefined &&
+      (obj.booking = message.booking
+        ? Booking.toJSON(message.booking)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetBookingResponse>, I>>(
+    object: I
+  ): GetBookingResponse {
+    const message = createBaseGetBookingResponse();
+    message.booking =
+      object.booking !== undefined && object.booking !== null
+        ? Booking.fromPartial(object.booking)
+        : undefined;
+    return message;
+  },
+};
+
 export interface Xpress {
   GetAvailableCouriers(
     request: DeepPartial<GetAvailableCouriersRequest>,
@@ -1404,9 +1689,13 @@ export interface Xpress {
     metadata?: grpc.Metadata
   ): Promise<CancelBookingResponse>;
   ListBookings(
-    request: DeepPartial<Empty>,
+    request: DeepPartial<ListBookingsRequest>,
     metadata?: grpc.Metadata
   ): Promise<ListBookingsResponse>;
+  GetBooking(
+    request: DeepPartial<GetBookingRequest>,
+    metadata?: grpc.Metadata
+  ): Promise<GetBookingResponse>;
 }
 
 export class XpressClientImpl implements Xpress {
@@ -1418,6 +1707,7 @@ export class XpressClientImpl implements Xpress {
     this.BookCourier = this.BookCourier.bind(this);
     this.CancelBooking = this.CancelBooking.bind(this);
     this.ListBookings = this.ListBookings.bind(this);
+    this.GetBooking = this.GetBooking.bind(this);
   }
 
   GetAvailableCouriers(
@@ -1454,12 +1744,23 @@ export class XpressClientImpl implements Xpress {
   }
 
   ListBookings(
-    request: DeepPartial<Empty>,
+    request: DeepPartial<ListBookingsRequest>,
     metadata?: grpc.Metadata
   ): Promise<ListBookingsResponse> {
     return this.rpc.unary(
       XpressListBookingsDesc,
-      Empty.fromPartial(request),
+      ListBookingsRequest.fromPartial(request),
+      metadata
+    );
+  }
+
+  GetBooking(
+    request: DeepPartial<GetBookingRequest>,
+    metadata?: grpc.Metadata
+  ): Promise<GetBookingResponse> {
+    return this.rpc.unary(
+      XpressGetBookingDesc,
+      GetBookingRequest.fromPartial(request),
       metadata
     );
   }
@@ -1542,13 +1843,35 @@ export const XpressListBookingsDesc: UnaryMethodDefinitionish = {
   responseStream: false,
   requestType: {
     serializeBinary() {
-      return Empty.encode(this).finish();
+      return ListBookingsRequest.encode(this).finish();
     },
   } as any,
   responseType: {
     deserializeBinary(data: Uint8Array) {
       return {
         ...ListBookingsResponse.decode(data),
+        toObject() {
+          return this;
+        },
+      };
+    },
+  } as any,
+};
+
+export const XpressGetBookingDesc: UnaryMethodDefinitionish = {
+  methodName: "GetBooking",
+  service: XpressDesc,
+  requestStream: false,
+  responseStream: false,
+  requestType: {
+    serializeBinary() {
+      return GetBookingRequest.encode(this).finish();
+    },
+  } as any,
+  responseType: {
+    deserializeBinary(data: Uint8Array) {
+      return {
+        ...GetBookingResponse.decode(data),
         toObject() {
           return this;
         },

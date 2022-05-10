@@ -45,6 +45,14 @@ export interface ListUsersResponse {
   users: User[];
 }
 
+export interface GetUserRequest {
+  id: string;
+}
+
+export interface GetUserResponse {
+  user?: User;
+}
+
 function createBaseUser(): User {
   return {
     id: "",
@@ -422,6 +430,118 @@ export const ListUsersResponse = {
   },
 };
 
+function createBaseGetUserRequest(): GetUserRequest {
+  return { id: "" };
+}
+
+export const GetUserRequest = {
+  encode(
+    message: GetUserRequest,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetUserRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.id = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserRequest {
+    return {
+      id: isSet(object.id) ? String(object.id) : "",
+    };
+  },
+
+  toJSON(message: GetUserRequest): unknown {
+    const obj: any = {};
+    message.id !== undefined && (obj.id = message.id);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetUserRequest>, I>>(
+    object: I
+  ): GetUserRequest {
+    const message = createBaseGetUserRequest();
+    message.id = object.id ?? "";
+    return message;
+  },
+};
+
+function createBaseGetUserResponse(): GetUserResponse {
+  return { user: undefined };
+}
+
+export const GetUserResponse = {
+  encode(
+    message: GetUserResponse,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetUserResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.user = User.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUserResponse {
+    return {
+      user: isSet(object.user) ? User.fromJSON(object.user) : undefined,
+    };
+  },
+
+  toJSON(message: GetUserResponse): unknown {
+    const obj: any = {};
+    message.user !== undefined &&
+      (obj.user = message.user ? User.toJSON(message.user) : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<GetUserResponse>, I>>(
+    object: I
+  ): GetUserResponse {
+    const message = createBaseGetUserResponse();
+    message.user =
+      object.user !== undefined && object.user !== null
+        ? User.fromPartial(object.user)
+        : undefined;
+    return message;
+  },
+};
+
 export type UsersService = typeof UsersService;
 export const UsersService = {
   createUser: {
@@ -446,11 +566,23 @@ export const UsersService = {
       Buffer.from(ListUsersResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer) => ListUsersResponse.decode(value),
   },
+  getUser: {
+    path: "/Users/GetUser",
+    requestStream: false,
+    responseStream: false,
+    requestSerialize: (value: GetUserRequest) =>
+      Buffer.from(GetUserRequest.encode(value).finish()),
+    requestDeserialize: (value: Buffer) => GetUserRequest.decode(value),
+    responseSerialize: (value: GetUserResponse) =>
+      Buffer.from(GetUserResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer) => GetUserResponse.decode(value),
+  },
 } as const;
 
 export interface UsersServer extends UntypedServiceImplementation {
   createUser: handleUnaryCall<CreateUserRequest, CreateUserResponse>;
   listUsers: handleUnaryCall<Empty, ListUsersResponse>;
+  getUser: handleUnaryCall<GetUserRequest, GetUserResponse>;
 }
 
 export interface UsersClient extends Client {
@@ -483,6 +615,21 @@ export interface UsersClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ListUsersResponse) => void
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void
+  ): ClientUnaryCall;
+  getUser(
+    request: GetUserRequest,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: GetUserResponse) => void
   ): ClientUnaryCall;
 }
 

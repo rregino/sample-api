@@ -6,16 +6,17 @@ import { CancelOrderResponse, GetOrderPriceResponse, RequestOrderResponse } from
 import { Booking } from "../model/booking";
 import { randomUUID } from "crypto";
 import { CourierClient } from "../model/courierClient";
+import { BookingDb } from "../repo/bookingdb";
 
 export class Service {
 
-  userDb: Db<number, NewUser, User>;
-  bookingDb: SimpleDb<string, Booking>;
+  userDb: Db<string, NewUser, User>;
+  bookingDb: BookingDb;
   courierClients: Array<CourierClient<PX.CourierType>>;
 
   constructor(
-    userDb: Db<number, NewUser, User>,
-    bookingDb: SimpleDb<string, Booking>,
+    userDb: Db<string, NewUser, User>,
+    bookingDb: BookingDb,
     courierClients: Array<CourierClient<PX.CourierType>>
   ) {
     this.userDb = userDb;
@@ -31,9 +32,13 @@ export class Service {
     return this.userDb.list();
   }
 
-  getAvailableCouriers(pickup?: PX.Point, dropoff?: PX.Point): Array<() => Promise<PX.GetAvailableCouriersResponse>> {
+  getUser(id: string): User | undefined {
+    return this.userDb.get(id);
+  }
+
+  getAvailableCouriers(pickup?: PX.Point, userId?: string, dropoff?: PX.Point): Array<() => Promise<PX.GetAvailableCouriersResponse>> {
     return this.courierClients.map(client => {
-      return () => this.getCourierPrice(client, pickup, dropoff);
+      return () => this.getCourierPrice(client, { pickup, userId} , dropoff);
     });
   }
 
@@ -70,16 +75,42 @@ export class Service {
     });
   }
 
-  private getCourierPrice(client: CourierClient<PX.CourierType>, pickup?: PX.Point, dropoff?: PX.Point): Promise<PX.GetAvailableCouriersResponse> {
-    if(pickup && dropoff) {
-      return client.getOrderPrice(pickup, dropoff)
-        .then(res => this.resolveGetOrderPriceResponse(res, pickup, dropoff));
+  listUserBookings(userId: string, status: Array<PX.BookingStatus>): Array<PX.Booking> {
+    const user = this.userDb.get(userId);
+    if(user) {
+      return this.bookingDb.getBookingsForUser(user.id, status).map(b => this.toPXBooking(b));
     } else {
-      return this.resolveError('Invalid points');
+      return [];
     }
   }
 
-  private resolveGetOrderPriceResponse(res: GetOrderPriceResponse, pickup: PX.Point, dropoff: PX.Point): Promise<PX.GetAvailableCouriersResponse> {
+  getBooking(id: string): PX.Booking | undefined {
+    const booking = this.bookingDb.get(id);
+    if(booking) return this.toPXBooking(booking);
+  }
+
+  private getCourierPrice(client: CourierClient<PX.CourierType>, origin: { pickup?: PX.Point, userId?: string },  destination?: PX.Point): Promise<PX.GetAvailableCouriersResponse> {
+    if(destination) {
+      const callApi = (pickup: PX.Point, dropoff: PX.Point, userId?: string) => {
+        return client.getOrderPrice(pickup, dropoff)
+        .then(res => this.resolveGetOrderPriceResponse(res, pickup, dropoff, userId));
+      }
+
+      const handleUserBooking = (userId: string) => {
+        const user = this.userDb.get(userId);
+        if(user) return callApi(this.userToPoint(user), destination, user.id);
+        else return this.resolveError('User not found');
+      }
+
+      if(origin.pickup) {
+        return callApi(origin.pickup, destination);
+      } else if(origin.userId) {
+        return handleUserBooking(origin.userId);
+      } else return this.resolveError('Invalid origin');
+    } else return this.resolveError('Invalid destination');
+  }
+
+  private resolveGetOrderPriceResponse(res: GetOrderPriceResponse, pickup: PX.Point, dropoff: PX.Point, userId?: string): Promise<PX.GetAvailableCouriersResponse> {
     if(E.isRight(res)) {
       const { bookingType, price } = res.right;
       const booking: Booking =
@@ -88,9 +119,11 @@ export class Service {
         , destination: dropoff
         , status: PX.BookingStatus.NO_STATUS
         , bookingType
+        , userId: userId
         , createdAt: new Date()
         };
       this.bookingDb.save(booking);
+
       return this.resolveSuccess({ id: booking.id.toString(), courier: bookingType._kind, price });
     } else {
       return this.resolveError(res.left);
@@ -122,6 +155,15 @@ export class Service {
     const updatedBooking: Booking = {...originalBooking, ...partialBooking };
     this.bookingDb.update(updatedBooking);
     return updatedBooking;
+  }
+
+  private userToPoint(user: User): PX.Point {
+    return { fullName: `${user.firstName} ${user.lastName}`,
+      mobileNumber: user.mobileNumber,
+      address: user.address,
+      lat: user.lat,
+      lng: user.lng
+      };
   }
 
   //assumes response have the same type

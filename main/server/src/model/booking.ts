@@ -20,12 +20,19 @@ interface Booking {
   status: PX.BookingStatus,
   bookingType: BookingType,
   bookingOrderId?: string,
+  userId?: string,
   createdAt: Date
+}
+
+interface UserBooking {
+  userId: string,
+  bookingId: string
 }
 
 export {
   BorzoBooking,
   LalamoveBooking,
   Booking,
-  BookingType
+  BookingType,
+  UserBooking
 }

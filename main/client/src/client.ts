@@ -13,17 +13,15 @@ const callListUsers = () => {
 };
 
 const callGetUser = (userId: string) => {
-  return usersClientImpl.ListUsers({}).then(res => {
-    return res.users.find(u => u.id === userId);
-  });
+  return usersClientImpl.GetUser({ id: userId }).then(res => res.user);
 };
 
 const callCreateUser = (req: PU.CreateUserRequest) => {
   return usersClientImpl.CreateUser(req);
 }
 
-const callGetBookings = () => {
-  return xpressClientImpl.ListBookings({}).then(res => {
+const callGetBookings = (userId: string) => {
+  return xpressClientImpl.ListBookings({ filter: { userId: userId, statuses: [ PX.BookingStatus.REQUESTED, PX.BookingStatus.CANCELED ] } }).then(res => {
     return res.bookings;
   });
 };
@@ -33,9 +31,7 @@ const callGetAvailableCouriers = (req: PX.GetAvailableCouriersRequest) => {
 };
 
 const callGetBooking = (id: string) => {
-  return xpressClientImpl.ListBookings({}).then(res => {
-    return res.bookings.find(u => u.id === id);
-  });
+  return xpressClientImpl.GetBooking({ id }).then(res => res.booking);
 };
 
 const callBookCourier = (id: string) => {

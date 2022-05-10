@@ -34,9 +34,16 @@ message ListUsersResponse {
   repeated User users = 1;
 }
 
+message GetUserRequest {
+  string id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
 service Users {
   rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {};
   rpc ListUsers (google.protobuf.Empty) returns (ListUsersResponse) {};
+  rpc GetUser (GetUserRequest) returns (GetUserResponse) {};
 }
-
-//todo modify create to accept lat/lng for now

@@ -1,7 +1,12 @@
 import { Booking } from "../model/booking";
 import { SimpleDb } from "../model/db";
+import * as PX from "../../../proto/xpress";
 
-class InMemBookingDb implements SimpleDb<string, Booking> {
+interface BookingDb extends SimpleDb<string, Booking> {
+  getBookingsForUser(userId: string, statuses: Array<PX.BookingStatus>): Array<Booking>
+}
+
+class InMemBookingDb implements BookingDb {
 
   inMemBookings: Array<Booking> = [];
 
@@ -23,8 +28,14 @@ class InMemBookingDb implements SimpleDb<string, Booking> {
   list(): Array<Booking> {
     return this.inMemBookings;
   }
+
+  getBookingsForUser(userId: string, statuses: Array<PX.BookingStatus>): Array<Booking> {
+    return this.inMemBookings.filter(u => u.userId == userId && (statuses.length == 0 || statuses.includes(u.status)));
+  }
+
 }
 
 export {
+  BookingDb,
   InMemBookingDb
 }

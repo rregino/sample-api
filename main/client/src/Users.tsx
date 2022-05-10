@@ -1,12 +1,14 @@
+import { stat } from 'fs';
 import React from 'react';
 import {
   Link,
   useParams,
   useNavigate
 } from "react-router-dom";
-import { callCreateUser, callGetBookings, callGetUser, callListUsers } from './client';
+import { callCancelCourier, callCreateUser, callGetBookings, callGetUser, callListUsers } from './client';
 import * as PU from "./proto/users";
 import * as PX from "./proto/xpress";
+import { bookingStatusToString } from './utils/utils';
 
 const ListUsers: React.FC = () => {
   const [users, setUsers] = React.useState<Array<PU.User>>([]);
@@ -21,7 +23,7 @@ const ListUsers: React.FC = () => {
     <div>
       <nav className="list-group">
           {users &&
-            users.map((user, index) => (
+            users.map(user => (
               <Link
                 style={{ display: "block", margin: "1rem 0" }}
                 to={`/bookings/${user.id}`}
@@ -48,8 +50,9 @@ const GetUser: React.FC = () => {
 
   React.useEffect(() => {
     if(params.userId) {
-      callGetUser(params.userId).then(userRes => {
-        return callGetBookings().then(bookingRes => {
+      const userId = params.userId;
+      callGetUser(userId).then(userRes => {
+        return callGetBookings(userId).then(bookingRes => {
           if(userRes) {
             setState({...state, ...{ user: userRes, bookings: bookingRes }});
           }
@@ -58,11 +61,47 @@ const GetUser: React.FC = () => {
     }
   }, []);
 
+  const onCancelPressed = (id: string) => {
+    callCancelCourier(id).then(res => {
+      if(res && res.booking) {
+        const booking = res.booking;
+        const index = state.bookings.findIndex(i => booking.id === i.id)
+
+        const getUpdateBookings = () => {
+          if(index > -1) {
+            state.bookings[index] = booking;
+            return state.bookings;
+          } else {
+            return state.bookings;
+          }
+        }
+
+        const updates = { bookings: getUpdateBookings() }
+
+        setState({...state, ...updates})
+      }
+    })
+  }
+
+  const renderBooking = (booking: PX.Booking) => {
+    return (
+      <div>
+        { booking.destination?.fullName } { `->` } { bookingStatusToString(booking.status) }
+        <button disabled={ booking.status === PX.BookingStatus.CANCELED } onClick={() => onCancelPressed(booking.id) }>
+          Cancel Booking
+        </button>
+      </div>
+    );
+  }
+
   return (<div>
     { state.user ? (
         <div>
           <div>
             Hello { state.user.firstName } { state.user.lastName }!
+          </div>
+          <div>
+            Bookings: { state.bookings.map(b => renderBooking(b)) }
           </div>
           <div>
             <Link to={`/bookings/${state.user.id}/create`}>Create Booking</Link>
@@ -110,7 +149,7 @@ const CreateUser: React.FC = () => {
       const req =
         { firstName: user.firstName
         , lastName: user.lastName
-        , mobileNumber: user.address
+        , mobileNumber: user.mobileNumber //check if +63
         , address: user.address
         , lat
         , lng

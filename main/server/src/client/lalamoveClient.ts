@@ -6,7 +6,7 @@ import { ApiError, ApiResponse, callApi, HttpMethod } from "./apiClient";
 import * as t from 'io-ts';
 import * as E from "fp-ts/lib/Either"
 import { LalamoveBooking } from "../model/booking";
-import { returnVoid } from "../utils/helpers";
+import { constVoid } from "fp-ts/lib/function";
 
 class LalamoveClient implements CourierClient<PX.CourierType.LALAMOVE> {
 
@@ -26,7 +26,7 @@ class LalamoveClient implements CourierClient<PX.CourierType.LALAMOVE> {
       language: 'en_PH'
     };
 
-    return this.processApiRequest<GetQuotationRequest, GetQuotationResponse>('/v3/quotations', 'POST', request, GetQuotationResponse).then(res => {
+    return this.processApiWithRequest<GetQuotationRequest, GetQuotationResponse>('/v3/quotations', 'POST', request, GetQuotationResponse).then(res => {
       return E.fold<ApiError, GetQuotationResponse, GetOrderPriceResponse>(
         left => GetOrderPriceError(left.message),
         right => {
@@ -55,7 +55,7 @@ class LalamoveClient implements CourierClient<PX.CourierType.LALAMOVE> {
       return { stopId: stopId, name: point.fullName, phone: `+${point.mobileNumber}` };
     }
 
-    return this.processApiRequest<PlaceOrderRequest, PlaceOrderResponse>('/v3/orders', 'POST', request, PlaceOrderResponse).then(res => {
+    return this.processApiWithRequest<PlaceOrderRequest, PlaceOrderResponse>('/v3/orders', 'POST', request, PlaceOrderResponse).then(res => {
       return E.fold<ApiError, PlaceOrderResponse, RequestOrderResponse>(
         left => RequestOrderError(left.message),
         right => RequestOrderSuccess({ orderId: right.orderId })
@@ -64,7 +64,7 @@ class LalamoveClient implements CourierClient<PX.CourierType.LALAMOVE> {
   }
 
   cancelOrder(orderId: string): Promise<CancelOrderResponse> {
-    return this.processApiRequest<void, void>(`/v3/orders/${orderId}`, 'DELETE', returnVoid() , t.void).then(res => {
+    return this.processApi(`/v3/orders/${orderId}`, 'DELETE').then(res => {
       return E.fold<ApiError, void, CancelOrderResponse>(
         left => CancelOrderError(left.message),
         _ => CancelOrderSuccess
@@ -72,33 +72,16 @@ class LalamoveClient implements CourierClient<PX.CourierType.LALAMOVE> {
     });
   }
 
-  private processApiRequest<Req, Res>(
+  private processApiWithRequest<Req, Res>(
     path: string,
     method: HttpMethod,
     req: Req,
     resType: t.Type<Res>
   ): Promise<ApiResponse<Res>> {
-    const requestId = randomUUID().toString();
-    const time = new Date().getTime().toString();
     const lalamoveRequest: LalamoveRequest<Req> = { data: req };
     const bodyStr = JSON.stringify(lalamoveRequest);
 
-    const getBody = () => {
-      if(method == 'POST' || method == 'PUT') return bodyStr;
-      else return '';
-    }
-
-    const body = getBody();
-    const rawSignature = `${time}\r\n${method}\r\n${path}\r\n\r\n${body}`;
-    const hmac = createHmac('sha256', this.keys.apiSecret);
-    const signature = hmac.update(rawSignature, 'utf-8').digest('hex'); //can fail
-
-    const token = `${this.keys.apiKey}:${time}:${signature}`;
-    const headers = {
-      'Authorization': `hmac ${token}`,
-      'Market': 'PH',
-      'Request-ID': requestId
-    };
+    const headers = this.getHeaders(path, method, bodyStr);
 
     const url = `${this.url}${path}`;
 
@@ -113,9 +96,38 @@ class LalamoveClient implements CourierClient<PX.CourierType.LALAMOVE> {
     });
   }
 
+  private processApi(
+    path: string,
+    method: HttpMethod
+  ): Promise<ApiResponse<void>> {
+    const headers = this.getHeaders(path, method);
+    const url = `${this.url}${path}`;
+    return callApi<void, void>(url, method, constVoid(), t.void, headers);
+  }
+
   private assembleDeliveryStop(point: PX.Point): DeliveryStop {
     return { coordinates: { lat: point.lat.toString(), lng: point.lng.toString() },
       address: point.address
+    };
+  }
+
+  private getHeaders(
+    path: string,
+    method: HttpMethod,
+    bodyOpt?: string,
+  ): { [key: string]: string } {
+    const requestId = randomUUID().toString();
+    const time = new Date().getTime().toString();
+    const body = bodyOpt ? bodyOpt : '';
+    const rawSignature = `${time}\r\n${method}\r\n${path}\r\n\r\n${body}`;
+    const hmac = createHmac('sha256', this.keys.apiSecret);
+    const signature = hmac.update(rawSignature, 'utf-8').digest('hex'); //can fail
+
+    const token = `${this.keys.apiKey}:${time}:${signature}`;
+    return {
+      'Authorization': `hmac ${token}`,
+      'Market': 'PH',
+      'Request-ID': requestId
     };
   }
 }

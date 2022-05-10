@@ -38,6 +38,8 @@ function callApi<Req, Res>(
       }
     })
     .then(json => {
+      console.log('JSONZZZ');
+      console.log(json);
       const res = resType.decode(json);
       switch(res._tag) {
         case "Right": return returnApiSuccess(res.right);
