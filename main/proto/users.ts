@@ -17,12 +17,14 @@ import { Timestamp } from "./google/protobuf/timestamp";
 import { Empty } from "./google/protobuf/empty";
 
 export interface User {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   mobileNumber: string;
   address: string;
   birthday?: Date;
+  lat: number;
+  lng: number;
 }
 
 export interface CreateUserRequest {
@@ -31,6 +33,8 @@ export interface CreateUserRequest {
   mobileNumber: string;
   address: string;
   birthday?: Date;
+  lat: number;
+  lng: number;
 }
 
 export interface CreateUserResponse {
@@ -43,19 +47,21 @@ export interface ListUsersResponse {
 
 function createBaseUser(): User {
   return {
-    id: 0,
+    id: "",
     firstName: "",
     lastName: "",
     mobileNumber: "",
     address: "",
     birthday: undefined,
+    lat: 0,
+    lng: 0,
   };
 }
 
 export const User = {
   encode(message: User, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.id !== 0) {
-      writer.uint32(8).int32(message.id);
+    if (message.id !== "") {
+      writer.uint32(10).string(message.id);
     }
     if (message.firstName !== "") {
       writer.uint32(18).string(message.firstName);
@@ -75,6 +81,12 @@ export const User = {
         writer.uint32(50).fork()
       ).ldelim();
     }
+    if (message.lat !== 0) {
+      writer.uint32(57).double(message.lat);
+    }
+    if (message.lng !== 0) {
+      writer.uint32(65).double(message.lng);
+    }
     return writer;
   },
 
@@ -86,7 +98,7 @@ export const User = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.id = reader.int32();
+          message.id = reader.string();
           break;
         case 2:
           message.firstName = reader.string();
@@ -105,6 +117,12 @@ export const User = {
             Timestamp.decode(reader, reader.uint32())
           );
           break;
+        case 7:
+          message.lat = reader.double();
+          break;
+        case 8:
+          message.lng = reader.double();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -115,7 +133,7 @@ export const User = {
 
   fromJSON(object: any): User {
     return {
-      id: isSet(object.id) ? Number(object.id) : 0,
+      id: isSet(object.id) ? String(object.id) : "",
       firstName: isSet(object.firstName) ? String(object.firstName) : "",
       lastName: isSet(object.lastName) ? String(object.lastName) : "",
       mobileNumber: isSet(object.mobileNumber)
@@ -125,12 +143,14 @@ export const User = {
       birthday: isSet(object.birthday)
         ? fromJsonTimestamp(object.birthday)
         : undefined,
+      lat: isSet(object.lat) ? Number(object.lat) : 0,
+      lng: isSet(object.lng) ? Number(object.lng) : 0,
     };
   },
 
   toJSON(message: User): unknown {
     const obj: any = {};
-    message.id !== undefined && (obj.id = Math.round(message.id));
+    message.id !== undefined && (obj.id = message.id);
     message.firstName !== undefined && (obj.firstName = message.firstName);
     message.lastName !== undefined && (obj.lastName = message.lastName);
     message.mobileNumber !== undefined &&
@@ -138,17 +158,21 @@ export const User = {
     message.address !== undefined && (obj.address = message.address);
     message.birthday !== undefined &&
       (obj.birthday = message.birthday.toISOString());
+    message.lat !== undefined && (obj.lat = message.lat);
+    message.lng !== undefined && (obj.lng = message.lng);
     return obj;
   },
 
   fromPartial<I extends Exact<DeepPartial<User>, I>>(object: I): User {
     const message = createBaseUser();
-    message.id = object.id ?? 0;
+    message.id = object.id ?? "";
     message.firstName = object.firstName ?? "";
     message.lastName = object.lastName ?? "";
     message.mobileNumber = object.mobileNumber ?? "";
     message.address = object.address ?? "";
     message.birthday = object.birthday ?? undefined;
+    message.lat = object.lat ?? 0;
+    message.lng = object.lng ?? 0;
     return message;
   },
 };
@@ -160,6 +184,8 @@ function createBaseCreateUserRequest(): CreateUserRequest {
     mobileNumber: "",
     address: "",
     birthday: undefined,
+    lat: 0,
+    lng: 0,
   };
 }
 
@@ -185,6 +211,12 @@ export const CreateUserRequest = {
         toTimestamp(message.birthday),
         writer.uint32(42).fork()
       ).ldelim();
+    }
+    if (message.lat !== 0) {
+      writer.uint32(49).double(message.lat);
+    }
+    if (message.lng !== 0) {
+      writer.uint32(57).double(message.lng);
     }
     return writer;
   },
@@ -213,6 +245,12 @@ export const CreateUserRequest = {
             Timestamp.decode(reader, reader.uint32())
           );
           break;
+        case 6:
+          message.lat = reader.double();
+          break;
+        case 7:
+          message.lng = reader.double();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -232,6 +270,8 @@ export const CreateUserRequest = {
       birthday: isSet(object.birthday)
         ? fromJsonTimestamp(object.birthday)
         : undefined,
+      lat: isSet(object.lat) ? Number(object.lat) : 0,
+      lng: isSet(object.lng) ? Number(object.lng) : 0,
     };
   },
 
@@ -244,6 +284,8 @@ export const CreateUserRequest = {
     message.address !== undefined && (obj.address = message.address);
     message.birthday !== undefined &&
       (obj.birthday = message.birthday.toISOString());
+    message.lat !== undefined && (obj.lat = message.lat);
+    message.lng !== undefined && (obj.lng = message.lng);
     return obj;
   },
 
@@ -256,6 +298,8 @@ export const CreateUserRequest = {
     message.mobileNumber = object.mobileNumber ?? "";
     message.address = object.address ?? "";
     message.birthday = object.birthday ?? undefined;
+    message.lat = object.lat ?? 0;
+    message.lng = object.lng ?? 0;
     return message;
   },
 };

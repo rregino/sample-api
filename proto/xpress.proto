@@ -18,6 +18,11 @@ message Booking {
   BookingStatus status = 5;
 }
 
+message UserBooking {
+  string user_id = 1;
+  Booking booking = 2;
+}
+
 enum CommonCourierErrorCode {
   ERROR_UNKNOWN = 0;
   INVALID_DETAILS = 1;

@@ -1,6 +1,4 @@
 import React from 'react';
-// import React, { ChangeEvent, FormEvent } from 'react';
-import { Component } from 'react';
 import './App.css';
 import {
   BrowserRouter as Router,
@@ -8,11 +6,10 @@ import {
   Route,
   Link
 } from "react-router-dom";
-// import User from './User';
 import { GetUser, CreateUser, ListUsers } from './Users';
 import { CreateBookings, GetBooking } from './Bookings';
 
-class App extends Component {
+class App extends React.Component {
   render() {
     return (
       <Router>
@@ -21,7 +18,7 @@ class App extends Component {
             <ul>
               <li><Link to="/">Home</Link></li>
               <li><Link to="/users">List Users</Link></li>
-              <li><Link to="/users/create">Create Users</Link></li>
+              <li><Link to="/users/create">Create User</Link></li>
             </ul>
           </nav>
 
@@ -40,7 +37,7 @@ class App extends Component {
   }
 }
 
-class Home extends Component {
+class Home extends React.Component {
   render() {
     return (
       <h2>Home</h2>

@@ -3,11 +3,13 @@ interface NewUser {
   lastName: string,
   mobileNumber: string,
   address: string,
-  birthday?: Date
+  birthday?: Date,
+  lat: number,
+  lng: number
 }
 
 interface User extends NewUser {
-  id: number
+  id: string
 }
 
 export {

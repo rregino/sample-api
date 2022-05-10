@@ -1,18 +1,21 @@
 import { NewUser, User } from '../model/user';
 import { Db } from '../model/db';
+import { randomUUID } from 'crypto';
 
-class InMemUserDb implements Db <number, NewUser, User> {
+class InMemUserDb implements Db <string, NewUser, User> {
 
   inMemUsers: Array<User> = [];
 
   save(t: NewUser): User {
     const user =
-      { id: new Date().getMilliseconds()
+      { id: randomUUID().toString()
       , firstName: t.firstName
       , lastName: t.lastName
       , address: t.address
       , mobileNumber: t.mobileNumber
       , birthday: t.birthday
+      , lat: t.lat
+      , lng: t.lng
       };
     this.inMemUsers.push(user);
     return user;
@@ -24,7 +27,7 @@ class InMemUserDb implements Db <number, NewUser, User> {
     this.inMemUsers = initUsers;
   }
 
-  get(id: number): User | undefined {
+  get(id: string): User | undefined {
     return this.inMemUsers.find(u => u.id == id);
   }
 

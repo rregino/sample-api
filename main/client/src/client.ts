@@ -14,7 +14,7 @@ const callListUsers = () => {
 
 const callGetUser = (userId: string) => {
   return usersClientImpl.ListUsers({}).then(res => {
-    return res.users.find(u => u.id.toString() === userId);
+    return res.users.find(u => u.id === userId);
   });
 };
 

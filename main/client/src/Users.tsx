@@ -2,16 +2,11 @@ import React from 'react';
 import {
   Link,
   useParams,
-  Outlet
+  useNavigate
 } from "react-router-dom";
 import { callCreateUser, callGetBookings, callGetUser, callListUsers } from './client';
 import * as PU from "./proto/users";
 import * as PX from "./proto/xpress";
-
-// const usersRpc = new PU.GrpcWebImpl('http://localhost:8080', { debug: false });
-// const usersClientImpt = new PU.UsersClientImpl(usersRpc);
-// const xpressRpc = new PX.GrpcWebImpl('http://localhost:8080', { debug: false });
-// const xpressClientImpt = new PX.XpressClientImpl(xpressRpc);
 
 const ListUsers: React.FC = () => {
   const [users, setUsers] = React.useState<Array<PU.User>>([]);
@@ -82,24 +77,50 @@ const GetUser: React.FC = () => {
 
 const CreateUser: React.FC = () => {
 
+  let navigate = useNavigate();
+
   interface NewUser {
     firstName: string,
     lastName: string,
     mobileNumber: string,
-    address: string
+    address: string,
+    lat: string,
+    lng: string
+  }
+
+  interface FormInput {
+    displayName: string,
+    name: string,
+    value: string
   }
 
   const [ user, setNewUser ] = React.useState<NewUser>({
     firstName: '',
     lastName: '',
     mobileNumber: '',
-    address: ''
+    address: '',
+    lat: '',
+    lng: ''
   });
 
   const handleSubmit = (event: React.FormEvent) =>  {
-    console.log('in create user');
-    console.log(user);
-    callCreateUser(user);
+    const lat = parseFloat(user.lat);
+    const lng = parseFloat(user.lng);
+    if(lat && lng) {
+      const req =
+        { firstName: user.firstName
+        , lastName: user.lastName
+        , mobileNumber: user.address
+        , address: user.address
+        , lat
+        , lng
+        }
+      callCreateUser(req).then(res => navigate('/users'));
+    } else {
+      alert('Invalid lat lng');
+      const newOnes = { lat: '', lng: '' };
+      setNewUser((prevState) => ({ ...prevState, ...newOnes }))
+    }
     event.preventDefault();
   }
 
@@ -109,32 +130,28 @@ const CreateUser: React.FC = () => {
     setNewUser({...user, ...updatedUser });
   }
 
+  const createTextInput = (i: FormInput) => {
+    return <label key={i.name}>
+      { i.displayName }:
+      <input name={i.name} type="text" value={i.value} onChange={handleChange} />
+    </label>
+  }
+
+  const formInputs: Array<FormInput> =
+    [ { displayName: 'First Name', name: 'firstName', value: user.firstName }
+    , { displayName: 'Last Name', name: 'lastName', value: user.lastName }
+    , { displayName: 'Mobile Number', name: 'mobileNumber', value: user.mobileNumber }
+    , { displayName: 'Address', name: 'address', value: user.address }
+    , { displayName: 'Lat', name: 'lat', value: user.lat }
+    , { displayName: 'Lng', name: 'lng', value: user.lng }
+    ]
+
   return(
-    <form onSubmit={handleSubmit}>
-      <label>
-        First Name:
-          <input name="firstName" type="text" value={user.firstName} onChange={handleChange} />
-      </label>
-
-      <label>
-        Last Name:
-          <input name="lastName" type="text" value={user.lastName} onChange={handleChange} />
-      </label>
-
-      <label>
-        Mobile Number:
-          <input name="mobileNumber" type="text" value={user.mobileNumber} onChange={handleChange} />
-      </label>
-
-      <label>
-        Address:
-          <input name="address" type="text" value={user.address} onChange={handleChange} />
-      </label>
-
+    <form onSubmit={ handleSubmit }>
+      { formInputs.map(i => createTextInput(i)) }
       <input type="submit" value="Submit" />
     </form>
   );
 }
-
 
 export { ListUsers, CreateUser, GetUser };

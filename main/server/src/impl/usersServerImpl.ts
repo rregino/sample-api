@@ -15,8 +15,7 @@ class UsersServerImpl implements ServerImpl<PU.UsersService, PU.UsersServer> {
 
   public Impl: PU.UsersServer = {
     createUser: (call: ServerUnaryCall<PU.CreateUserRequest, PU.CreateUserResponse>, callback: sendUnaryData<PU.CreateUserResponse>): void => {
-      const { firstName, lastName, mobileNumber, address, birthday } = call.request;
-      const newUser = this.svc.createUser({ firstName, lastName, mobileNumber, address, birthday });
+      const newUser = this.svc.createUser(call.request);
       const response: PU.CreateUserResponse = { user: newUser };
       callback(null, response);
     },

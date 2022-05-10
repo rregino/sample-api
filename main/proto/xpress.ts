@@ -145,6 +145,11 @@ export interface Booking {
   status: BookingStatus;
 }
 
+export interface UserBooking {
+  userId: string;
+  booking?: Booking;
+}
+
 export interface GetAvailableCouriersRequest {
   pickUp?: Point;
   dropOff?: Point;
@@ -398,6 +403,77 @@ export const Booking = {
         : undefined;
     message.courier = object.courier ?? 0;
     message.status = object.status ?? 0;
+    return message;
+  },
+};
+
+function createBaseUserBooking(): UserBooking {
+  return { userId: "", booking: undefined };
+}
+
+export const UserBooking = {
+  encode(
+    message: UserBooking,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.userId !== "") {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.booking !== undefined) {
+      Booking.encode(message.booking, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): UserBooking {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseUserBooking();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.userId = reader.string();
+          break;
+        case 2:
+          message.booking = Booking.decode(reader, reader.uint32());
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): UserBooking {
+    return {
+      userId: isSet(object.userId) ? String(object.userId) : "",
+      booking: isSet(object.booking)
+        ? Booking.fromJSON(object.booking)
+        : undefined,
+    };
+  },
+
+  toJSON(message: UserBooking): unknown {
+    const obj: any = {};
+    message.userId !== undefined && (obj.userId = message.userId);
+    message.booking !== undefined &&
+      (obj.booking = message.booking
+        ? Booking.toJSON(message.booking)
+        : undefined);
+    return obj;
+  },
+
+  fromPartial<I extends Exact<DeepPartial<UserBooking>, I>>(
+    object: I
+  ): UserBooking {
+    const message = createBaseUserBooking();
+    message.userId = object.userId ?? "";
+    message.booking =
+      object.booking !== undefined && object.booking !== null
+        ? Booking.fromPartial(object.booking)
+        : undefined;
     return message;
   },
 };
