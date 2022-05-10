@@ -9,6 +9,16 @@ const bookingStatusToString = (status: PX.BookingStatus) => {
   }
 }
 
+const courierTypeToString = (courierType: PX.CourierType) => {
+  switch(courierType) {
+    case PX.CourierType.BORZO: return 'Borzo';
+    case PX.CourierType.LALAMOVE: return 'Lalamove';
+    default: return 'Others';
+  }
+}
+
+
 export {
-  bookingStatusToString
+  bookingStatusToString,
+  courierTypeToString
 }

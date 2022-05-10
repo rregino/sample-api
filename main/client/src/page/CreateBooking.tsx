@@ -3,12 +3,12 @@ import {
   useParams,
   useNavigate
 } from "react-router-dom";
-import { callBookCourier, callCancelCourier, callGetAvailableCouriers, callGetBooking, callGetUser } from './client';
-import * as PU from "./proto/users";
-import * as PX from "./proto/xpress";
-import { bookingStatusToString } from './utils/utils';
+import { courierTypeToString } from '../utils/utils';
+import { callGetAvailableCouriers, callGetUser } from '../client';
+import * as PU from "../proto/users";
+import * as PX from "../proto/xpress";
 
-const CreateBookings: React.FC = () => {
+const CreateBooking: React.FC = () => {
 
   type State = {
     user?: PU.User,
@@ -95,7 +95,7 @@ const CreateBookings: React.FC = () => {
       const success = res.success;
       return (
         <div key={success.id}>
-          { translateCourier(success.courier) } -- PHP { success.price }
+          { courierTypeToString(success.courier) } -- PHP { success.price }
           <button onClick={() => onButtonPressed(success.id)}>
             Select
         </button>
@@ -144,127 +144,6 @@ const CreateBookings: React.FC = () => {
   </div>
 }
 
-const GetBooking: React.FC = () => {
-  let params = useParams();
-
-  type State = {
-    booking?: PX.Booking,
-    isBookPressed: boolean,
-    isCancelPressed: boolean
-    error?: string //todo add
-  }
-
-  const [ state, setState ] = React.useState<State>({ isBookPressed: false, isCancelPressed: false });
-
-  React.useEffect(() => {
-    if(params.bookingId) {
-      callGetBooking(params.bookingId).then(bookingRes => {
-        updateState({ booking: bookingRes });
-        // setState(prevState => ({...prevState, ...{ booking: bookingRes }}));
-      });
-    }
-  }, []);
-
-  const renderPoint = (point: PX.Point) => {
-    return (
-      <div>
-        <div> Full name: { point.fullName } </div>
-        <div> Mobile Number: { point.mobileNumber }</div>
-        <div> Address: { point.address }</div>
-      </div>
-    );
-  }
-
-  const onBookPressed = () => {
-    if(state.booking?.id) {
-      // setState(prevState => ({...prevState, ...{ isBookPressed: true }}));
-      updateState({ isBookPressed: true });
-      callBookCourier(state.booking.id).then(res => {
-        if(res && res.booking) {
-          updateState({ booking: res.booking, isBookPressed: false });
-          // setState(prevState => ({...prevState, ...{ booking: res.booking, isBookPressed: false }}));
-        }
-      })
-    }
-  };
-
-  const onCancelPressed = () => {
-    if(state.booking?.id) {
-      // setState(prevState => ({...prevState, ...{ isCancelPressed: true }}));
-      updateState({ isCancelPressed: true });
-      callCancelCourier(state.booking?.id).then(res => {
-        if(res && res.booking) {
-          updateState({ booking: res.booking, isCancelPressed: false });
-          // setState(prevState => ({...prevState, ...{ booking: res.booking, isCancelPressed: false }}));
-        }
-      })
-    }
-  }
-
-  const updateState = (state: Partial<State>) => {
-    setState(prevState => ({...prevState, ...state}));
-  }
-
-  const isCancelButtonDisabled = () => {
-    if (state.isCancelPressed) {
-      return true;
-    } else if(state.booking) {
-      return state.booking?.status !== PX.BookingStatus.REQUESTED;
-    }
-    return true;
-  }
-
-  const isBookButtonDisabled = () => {
-    if(state.isBookPressed) {
-      return true;
-    } else if(state.booking) {
-      return state.booking?.status === PX.BookingStatus.REQUESTED;
-    }
-    return true;
-  }
-
-  return <div>
-    Details
-    <div>
-      Courier:
-      { state.booking?.courier ?
-        translateCourier(state.booking.courier) : <div>No Courier</div>
-      }
-    </div>
-    <div>
-      Sender:
-      { state.booking?.origin ?
-          renderPoint(state.booking.origin) : <div>No Sender</div>
-      }
-    </div>
-    <div>
-      Recipient:
-      { state.booking?.destination ?
-          renderPoint(state.booking.destination) : <div>No Recipient</div>
-      }
-    </div>
-    <div>
-      Status: { state.booking ? bookingStatusToString(state.booking.status) : 'No status' }
-    </div>
-    <button disabled={ isBookButtonDisabled() } onClick={() => onBookPressed() }>
-      Book
-    </button>
-    <button disabled={ isCancelButtonDisabled() } onClick={() => onCancelPressed() }>
-      Cancel Booking
-    </button>
-
-  </div>
-}
-
-const translateCourier = (courierType: PX.CourierType) => {
-  switch(courierType) {
-    case PX.CourierType.BORZO: return 'Borzo';
-    case PX.CourierType.LALAMOVE: return 'Lalamove';
-    default: return 'Others';
-  }
-}
-
 export {
-  CreateBookings,
-  GetBooking
-};
+  CreateBooking
+}

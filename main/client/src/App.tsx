@@ -6,8 +6,11 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import { GetUser, CreateUser, ListUsers } from './Users';
-import { CreateBookings, GetBooking } from './Bookings';
+import { CreateBooking } from './page/CreateBooking';
+import { GetBooking } from './page/GetBooking';
+import { ListUsers } from './page/ListUsers';
+import { GetUser } from './page/GetUser';
+import { CreateUser } from './page/CreateUser';
 
 class App extends React.Component {
   render() {
@@ -26,7 +29,7 @@ class App extends React.Component {
             <Route path="/users" element={<ListUsers/>}/>
             <Route path="/users/create" element={<CreateUser/>} />
             <Route path="/bookings/:userId" element={<GetUser/>} />
-            <Route path="/bookings/:userId/create" element={<CreateBookings/>} />
+            <Route path="/bookings/:userId/create" element={<CreateBooking/>} />
             <Route path="/bookings/:userId/:bookingId" element={<GetBooking/>} />
             <Route path="/" element={<Home/>}/>
           </Routes>
@@ -39,7 +42,7 @@ class App extends React.Component {
 class Home extends React.Component {
   render() {
     return (
-      <h2>Home</h2>
+      <h2>Hello World!</h2>
     );
   }
 }
