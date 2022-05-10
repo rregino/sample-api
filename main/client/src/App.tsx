@@ -11,6 +11,7 @@ import { GetBooking } from './page/GetBooking';
 import { ListUsers } from './page/ListUsers';
 import { GetUser } from './page/GetUser';
 import { CreateUser } from './page/CreateUser';
+import "./style.css";
 
 class App extends React.Component {
   render() {

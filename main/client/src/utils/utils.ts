@@ -17,8 +17,13 @@ const courierTypeToString = (courierType: PX.CourierType) => {
   }
 }
 
+const mobileRe = new RegExp('^(63)[0-9]{10}$');
+const isValidPhMobile = (m: string) => {
+  return mobileRe.test(m);
+}
 
 export {
   bookingStatusToString,
-  courierTypeToString
+  courierTypeToString,
+  isValidPhMobile
 }

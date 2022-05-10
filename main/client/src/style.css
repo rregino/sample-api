@@ -1,0 +1,65 @@
+.Page {
+  padding: 20px;
+}
+
+.ListUsers-link {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.GetUser-title-container {
+  display: flex;
+  align-items: center;
+}
+
+.GetUser-title {
+  margin-right: 20px;
+}
+
+.GetUser-content table, tr {
+  border-spacing: 50px 15px;
+}
+
+.FormInput-container {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.FormInput-title {
+  width: 10%;
+}
+
+.FormInput-content {
+  width: 30%;
+}
+
+.CreateBooking-content table, tr {
+  border-spacing: 50px 15px;
+}
+
+.GetBooking-field-container {
+  display: flex;
+  align-items: baseline;
+}
+
+.GetBooking-field-header {
+  margin: 0px 20px 0px 0px;
+}
+
+.GetBooking-point-container {
+  display: flex;
+  align-items: center;
+}
+
+.GetBooking-point-container h4 {
+  width: 10%;
+  margin: 2px;
+}
+
+.GetBooking-button-container {
+  margin-top: 20px;
+}
+
+.GetBooking-button-container button {
+  margin-right: 20px;
+}

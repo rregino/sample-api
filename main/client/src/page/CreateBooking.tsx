@@ -3,7 +3,7 @@ import {
   useParams,
   useNavigate
 } from "react-router-dom";
-import { courierTypeToString } from '../utils/utils';
+import { courierTypeToString, isValidPhMobile } from '../utils/utils';
 import { callGetAvailableCouriers, callGetUser } from '../client';
 import * as PU from "../proto/users";
 import * as PX from "../proto/xpress";
@@ -25,13 +25,19 @@ const CreateBooking: React.FC = () => {
     lng: string;
   }
 
+  interface FormInput {
+    displayName: string,
+    name: string,
+    value: string
+  }
+
   const [ state, setState ] = React.useState<State>({
     recipient: {
-      fullName: 'Harry Potter',
-      mobileNumber: '639196105668',
-      address: 'Unit 407 JG Building, C. Raymundo Avenue, Rosario, Pasig, 1909 Metro Manila',
-      lat: '14.585483785289902',
-      lng: '121.08841461243956'
+      fullName: '',
+      mobileNumber: '',
+      address: '',
+      lat: '',
+      lng: ''
     },
     availableCouriers: []
   });
@@ -42,7 +48,8 @@ const CreateBooking: React.FC = () => {
   React.useEffect(() => {
     if(params.userId) {
       callGetUser(params.userId).then(userRes => {
-        setState(prevState => ({...prevState, ...{ user: userRes }}));
+        // setState(prevState => ({...prevState, ...{ user: userRes }}));
+        updateState({ user: userRes });
       });
     }
   }, []);
@@ -50,17 +57,19 @@ const CreateBooking: React.FC = () => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     const updatedRecipient: Recipient = { [name]: value } as Pick<Recipient, keyof Recipient>;
-    setState(prevState => ({...prevState, ...{ recipient: {...prevState.recipient, ...updatedRecipient }}}));
-    console.log(state.recipient);
+    // setState(prevState => ({...prevState, ...{ recipient: {...prevState.recipient, ...updatedRecipient }}}));
+    updateStateP(prevState => ({ recipient: {...prevState.recipient, ...updatedRecipient }}));
+    // console.log(state.recipient);
   }
 
   const handleSubmit = (event: React.FormEvent) => {
-    setState((prevState) => ({ ...prevState, ...{ availableCouriers: [] } }))
+    // setState((prevState) => ({ ...prevState, ...{ availableCouriers: [] } }))
+    updateState({ availableCouriers: [] });
 
     const pickUpLat =  parseFloat(state.recipient.lat);
     const pickUpLng =  parseFloat(state.recipient.lng);
 
-    if(pickUpLat && pickUpLng && state.user?.id) {
+    if(pickUpLat && pickUpLng && state.user?.id && isValidPhMobile(state.recipient.mobileNumber)) {
       const dropOff: PX.Point =
         { fullName: state.recipient.fullName,
           mobileNumber: state.recipient.mobileNumber,
@@ -72,7 +81,8 @@ const CreateBooking: React.FC = () => {
         const observable = {
           next: (value: PX.GetAvailableCouriersResponse) => {
             const response = [ value ];
-            setState((prevState) => ({ ...prevState, ...{ availableCouriers: [...prevState.availableCouriers, ...response] } }));
+            // setState((prevState) => ({ ...prevState, ...{ availableCouriers: [...prevState.availableCouriers, ...response] } }));
+            updateStateP((prevState) => ({ availableCouriers: [...prevState.availableCouriers, ...response] }));
           },
           complete: () => {
             console.log('after');
@@ -81,7 +91,10 @@ const CreateBooking: React.FC = () => {
         callGetAvailableCouriers({ userId: state.user.id, dropOff }).subscribe(observable);
 
 
-    } else alert('Invalid lat lng');
+    } else {
+      alert('Invalid values');
+      updateStateP(ps => ({ recipient: { ...ps.recipient, ...{ mobileNumber: '', lat: '', lng: '' } } }));
+    }
 
     event.preventDefault();
   }
@@ -90,58 +103,73 @@ const CreateBooking: React.FC = () => {
     navigate(`/bookings/${state.user?.id}/${id}`);
   }
 
-  const renderAvailableCouriers = (res: PX.GetAvailableCouriersResponse) => {
-    if(res.success) {
-      const success = res.success;
-      return (
-        <div key={success.id}>
-          { courierTypeToString(success.courier) } -- PHP { success.price }
-          <button onClick={() => onButtonPressed(success.id)}>
-            Select
-        </button>
-        </div>
-      );
-    } else if(res.error) return <div> Error: { res.error.errorMessage } </div>;
-    else return <div/>;
+  const renderAvailableCourierRow = (res: PX.GetAvailableCouriersResponse, idx: number) => {
+    const success = res.success;
+    const name = success? courierTypeToString(success.courier) : 'ERROR';
+    const price = success? success.price : '-';
+    const action = success? (
+      <button onClick={() => onButtonPressed(success.id)}>Select</button>
+    ) : <div></div>
+    return (
+      <tr key={idx}>
+        <td>{name}</td>
+        <td>{price}</td>
+        <td>{action}</td>
+      </tr>
+    );
   }
 
-  return <div>
-    Recipient
-    <div>
+  const updateState = (state: Partial<State>) => {
+    setState(prevState => ({...prevState, ...state}));
+  }
+
+  type Func = (prevState: State) => Partial<State>
+
+  const updateStateP = (func: Func) => {
+    setState(prevState => ({...prevState, ...func(prevState)}));
+  }
+
+  const renderFormInput = (i: FormInput) => {
+    return (
+      <div className='FormInput-container'>
+        <div className='FormInput-title' key={i.name}>{ i.displayName }</div>
+        <input className='FormInput-content'
+            name={i.name} type="text" value={i.value} onChange={handleChange}/>
+      </div>
+    );
+  }
+
+  const formInputs: Array<FormInput> =
+    [ { displayName: 'Full Name', name: 'fullName', value: state.recipient.fullName }
+    , { displayName: 'Mobile Number', name: 'mobileNumber', value: state.recipient.mobileNumber }
+    , { displayName: 'Address', name: 'address', value: state.recipient.address }
+    , { displayName: 'Lat', name: 'lat', value: state.recipient.lat }
+    , { displayName: 'Lng', name: 'lng', value: state.recipient.lng }
+    ]
+
+  return (
+    <div className='Page'>
+      <h2>Recipient</h2>
       <form onSubmit={handleSubmit}>
-        <label>
-          Full name:
-            <input name="fullName" type="text" value={state.recipient.fullName} onChange={handleChange}/>
-        </label>
-        <label>
-          Mobile number:
-            <input name="mobileNumber" type="text" value={state.recipient.mobileNumber} onChange={handleChange}/>
-        </label>
-
-        <label>
-          Address:
-            <input name="address" type="text" value={state.recipient.address} onChange={handleChange}/>
-        </label>
-
-        <label>
-          Lat:
-            <input name="lat" type="text" value={state.recipient.lat} onChange={handleChange}/>
-        </label>
-
-        <label>
-          Lng:
-            <input name="lng" type="text" value={state.recipient.lng} onChange={handleChange}/>
-        </label>
+        { formInputs.map(i => renderFormInput(i)) }
         <input type="submit" value="Submit" />
       </form>
+
+      <div className='CreateBooking-content'>
+        <h2>Select a courier</h2>
+        <table >
+          <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Action</th>
+          </tr>
+          { state.availableCouriers &&
+              state.availableCouriers.map((availableCourier, idx) => renderAvailableCourierRow(availableCourier, idx))
+          }
+        </table>
+      </div>
     </div>
-    <div>
-      Couriers:
-        { state.availableCouriers &&
-          state.availableCouriers.map(availableCourier => renderAvailableCouriers(availableCourier))
-        }
-    </div>
-  </div>
+  );
 }
 
 export {

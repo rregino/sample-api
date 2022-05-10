@@ -24,7 +24,8 @@ const GetUser: React.FC = () => {
       callGetUser(userId).then(userRes => {
         return callGetBookings(userId).then(bookingRes => {
           if(userRes) {
-            setState({...state, ...{ user: userRes, bookings: bookingRes }});
+            // setState({...state, ...{ user: userRes, bookings: bookingRes }});
+            updateState({ user: userRes, bookings: bookingRes });
           }
         })
       })
@@ -46,42 +47,65 @@ const GetUser: React.FC = () => {
           }
         }
 
-        const updates = { bookings: getUpdateBookings() }
+        const bookings = getUpdateBookings();
 
-        setState({...state, ...updates})
+        updateState({ bookings });
+        // setState({...state, ...updates})
       }
     })
   }
 
-  const renderBooking = (booking: PX.Booking) => {
+  const renderBookingRows = (booking: PX.Booking) => {
     return (
-      <div>
-        { booking.destination?.fullName } { `->` } { bookingStatusToString(booking.status) }
-        <button disabled={ booking.status === PX.BookingStatus.CANCELED } onClick={() => onCancelPressed(booking.id) }>
-          Cancel Booking
-        </button>
-      </div>
+      <tr key={booking.id}>
+        <td>{booking.id}</td>
+        <td>{booking.destination?.fullName}</td>
+        <td>{bookingStatusToString(booking.status)}</td>
+        <td>
+          <button disabled={ booking.status === PX.BookingStatus.CANCELED } onClick={() => onCancelPressed(booking.id) }>
+            Cancel Booking
+          </button>
+        </td>
+      </tr>
     );
   }
 
-  return (<div>
-    { state.user ? (
-        <div>
+  const updateState = (state: Partial<State>) => {
+    setState(prevState => ({...prevState, ...state}));
+  }
+
+  return (
+    <div className='Page'>
+      { state.user ? (
           <div>
-            Hello { state.user.firstName } { state.user.lastName }!
+            <div className='GetUser-title-container'>
+              <h2 className='GetUser-title'>
+                Hello { state.user.firstName } { state.user.lastName }!
+              </h2>
+              <div>
+                <Link to={`/bookings/${state.user.id}/create`}>Create Booking</Link>
+              </div>
+            </div>
+
+            <div className='GetUser-content'>
+              <h3>Bookings</h3>
+              <table>
+                <tr>
+                  <th>Id</th>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+                { state.bookings.map(b => renderBookingRows(b)) }
+              </table>
+            </div>
           </div>
-          <div>
-            Bookings: { state.bookings.map(b => renderBooking(b)) }
-          </div>
-          <div>
-            <Link to={`/bookings/${state.user.id}/create`}>Create Booking</Link>
-          </div>
-        </div>
-      ) : (
-        <div> User not found </div>
-      )
-    }
-  </div>);
+        ) : (
+          <h2> User not found </h2>
+        )
+      }
+    </div>
+  );
 }
 
 export {

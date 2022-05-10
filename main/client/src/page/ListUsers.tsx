@@ -15,22 +15,20 @@ const ListUsers: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <nav className="list-group">
-          {users &&
-            users.map(user => (
-              <Link
-                style={{ display: "block", margin: "1rem 0" }}
-                to={`/bookings/${user.id}`}
-                key={user.id}
-              >
-                {user.firstName} {user.lastName}
-              </Link>
-            ))
-          }
-        </nav>
+    <div className='Page'>
+      { users &&
+          users.map(user => (
+            <Link
+              className='ListUsers-link'
+              to={`/bookings/${user.id}`}
+              key={user.id}
+            >
+              {user.firstName} {user.lastName}
+            </Link>
+          ))
+        }
     </div>
-    );
+  );
 }
 
 export {

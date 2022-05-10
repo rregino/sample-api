@@ -1,3 +1,4 @@
+import { string } from 'fp-ts';
 import React from 'react';
 import {
   Link,
@@ -26,16 +27,6 @@ const GetBooking: React.FC = () => {
       });
     }
   }, []);
-
-  const renderPoint = (point: PX.Point) => {
-    return (
-      <div>
-        <div> Full name: { point.fullName } </div>
-        <div> Mobile Number: { point.mobileNumber }</div>
-        <div> Address: { point.address }</div>
-      </div>
-    );
-  }
 
   const onBookPressed = () => {
     if(state.booking?.id) {
@@ -75,48 +66,81 @@ const GetBooking: React.FC = () => {
     return true;
   }
 
+  const fields: Array<{ title: string, value: string }> =
+  [ { title: 'Courier'
+    , value: (
+      state.booking?.courier ?
+        courierTypeToString(state.booking.courier) : 'No Courier'
+      )
+    }
+  , { title: 'Status'
+    , value: (
+        state.booking ? bookingStatusToString(state.booking.status) : 'No status'
+      )
+    }
+  ]
+
   const renderGetUserLink = (userId: string) => {
     return (
       <Link
         style={{ display: "block", margin: "1rem 0" }}
         to={`/bookings/${userId}`}>
-        User
+        Go to User
       </Link>
     );
   }
 
-  return <div>
-    { params.userId ? renderGetUserLink(params.userId) : <div/> }
-    Details
-    <div>
-      Courier:
-      { state.booking?.courier ?
-        courierTypeToString(state.booking.courier) : <div>No Courier</div>
-      }
-    </div>
-    <div>
-      Sender:
-      { state.booking?.origin ?
-          renderPoint(state.booking.origin) : <div>No Sender</div>
-      }
-    </div>
-    <div>
-      Recipient:
-      { state.booking?.destination ?
-          renderPoint(state.booking.destination) : <div>No Recipient</div>
-      }
-    </div>
-    <div>
-      Status: { state.booking ? bookingStatusToString(state.booking.status) : 'No status' }
-    </div>
-    <button disabled={ isBookButtonDisabled() } onClick={() => onBookPressed() }>
-      Book
-    </button>
-    <button disabled={ isCancelButtonDisabled() } onClick={() => onCancelPressed() }>
-      Cancel Booking
-    </button>
+  const renderPoint = (point: PX.Point) => {
+    return (
+      <div>
+        <div className='GetBooking-point-container'> <h4>Full name:</h4> { point.fullName } </div>
+        <div className='GetBooking-point-container'> <h4>Number:</h4> { point.mobileNumber }</div>
+        <div className='GetBooking-point-container'> <h4>Address:</h4> { point.address }</div>
+      </div>
+    );
+  }
 
-  </div>
+  const renderField = (field: { title: string, value: string }) => {
+    return (
+      <div className='GetBooking-field-container'>
+        <h4 className='GetBooking-field-header'>{field.title}</h4>
+        <div>{ field.value}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className='Page'>
+      { params.userId ? renderGetUserLink(params.userId) : <div/> }
+
+      <h2>Details</h2>
+
+      { fields.map(f => renderField(f))
+      }
+
+      <div>
+        <h4>Sender</h4>
+        { state.booking?.origin ?
+            renderPoint(state.booking.origin) : <div>No Sender</div>
+        }
+      </div>
+      <div>
+        <h4>Recipient</h4>
+        { state.booking?.destination ?
+            renderPoint(state.booking.destination) : <div>No Recipient</div>
+        }
+      </div>
+
+      <div className='GetBooking-button-container'>
+        <button disabled={ isBookButtonDisabled() } onClick={() => onBookPressed() }>
+          Book
+        </button>
+        <button disabled={ isCancelButtonDisabled() } onClick={() => onCancelPressed() }>
+          Cancel Booking
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export {

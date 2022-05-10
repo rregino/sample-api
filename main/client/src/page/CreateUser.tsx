@@ -2,6 +2,7 @@ import React from 'react';
 import {
   useNavigate
 } from "react-router-dom";
+import { isValidPhMobile } from '../utils/utils';
 import { callCreateUser } from './../client';
 
 const CreateUser: React.FC = () => {
@@ -35,20 +36,21 @@ const CreateUser: React.FC = () => {
   const handleSubmit = (event: React.FormEvent) =>  {
     const lat = parseFloat(user.lat);
     const lng = parseFloat(user.lng);
-    if(lat && lng) {
+
+    if(lat && lng && isValidPhMobile(user.mobileNumber)) {
       const req =
         { firstName: user.firstName
         , lastName: user.lastName
-        , mobileNumber: user.mobileNumber //check if +63
+        , mobileNumber: user.mobileNumber
         , address: user.address
         , lat
         , lng
         }
       callCreateUser(req).then(res => navigate('/users'));
     } else {
-      alert('Invalid lat lng');
-      const newOnes = { lat: '', lng: '' };
-      setNewUser((prevState) => ({ ...prevState, ...newOnes }))
+      alert('Invalid values');
+      const newLatLng = { mobileNumber: '', lat: '', lng: '' };
+      setNewUser((prevState) => ({ ...prevState, ...newLatLng }));
     }
     event.preventDefault();
   }
@@ -59,11 +61,14 @@ const CreateUser: React.FC = () => {
     setNewUser({...user, ...updatedUser });
   }
 
-  const createTextInput = (i: FormInput) => {
-    return <label key={i.name}>
-      { i.displayName }:
-      <input name={i.name} type="text" value={i.value} onChange={handleChange} />
-    </label>
+  const renderFormInput = (i: FormInput) => {
+    return (
+      <div className='FormInput-container'>
+        <div className='FormInput-title' key={i.name}>{ i.displayName }</div>
+        <input className='FormInput-content'
+            name={i.name} type="text" value={i.value} onChange={handleChange}/>
+      </div>
+    );
   }
 
   const formInputs: Array<FormInput> =
@@ -77,7 +82,7 @@ const CreateUser: React.FC = () => {
 
   return(
     <form onSubmit={ handleSubmit }>
-      { formInputs.map(i => createTextInput(i)) }
+      { formInputs.map(i => renderFormInput(i)) }
       <input type="submit" value="Submit" />
     </form>
   );
