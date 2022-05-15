@@ -1,13 +1,13 @@
 {
-  "name": "sample-api",
+  "name": "server",
   "version": "1.0.0",
   "description": "",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "proto:server-generate": "./scripts/server-generate-proto.sh",
-    "proto:client-generate": "./scripts/client-generate-proto.sh",
-    "start:server": "ts-node-dev --respawn --pretty main/server/src"
+    "dev": "ts-node-dev --respawn --pretty src/"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
